@@ -1,0 +1,48 @@
+### 🚀 Ignore build and binary files ###
+/target/
+**/*.jar
+**/*.war
+**/*.ear
+
+### 🔧 Ignore IDE-specific configuration files (IntelliJ, Eclipse, VS Code) ###
+# IntelliJ IDEA
+/.idea/
+/*.iml
+/out/
+
+# Eclipse
+/.settings/
+/.project
+.classpath
+
+# VS Code
+/.vscode/
+
+### 📦 Ignore downloaded dependencies (avoid committing them) ###
+/.mvn/
+.mvn/wrapper/maven-wrapper.jar
+.gradle/
+/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+### 🛠️ Ignore operating system files ###
+.DS_Store
+Thumbs.db
+
+### 🔒 Ignore sensitive configuration files ###
+#/application.properties
+#/application.yml
+#/src/main/resources/application.properties
+#/src/main/resources/application.yml
+.env
+
+### 🛠️ Ignore logs and temporary files ###
+*.log
+/logs/
+hs_err_pid*
+*.swp
+*.swo
+
+### 📜 Ignore test and coverage files ###
+/test-output/
+/jacoco/
