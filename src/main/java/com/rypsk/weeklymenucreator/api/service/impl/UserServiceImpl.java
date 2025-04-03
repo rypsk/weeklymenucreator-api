@@ -1,4 +1,6 @@
 package com.rypsk.weeklymenucreator.api.service.impl;
 
-public class UserServiceImpl {
+import com.rypsk.weeklymenucreator.api.service.UserService;
+
+public class UserServiceImpl implements UserService {
 }
