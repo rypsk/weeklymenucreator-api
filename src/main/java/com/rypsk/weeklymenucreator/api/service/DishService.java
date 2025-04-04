@@ -7,13 +7,13 @@ import jakarta.validation.constraints.Min;
 import java.util.List;
 
 public interface DishService {
-    DishResponse getDishById(@Min(1) Long id);
+    DishResponse getDish(@Min(1) Long id);
 
     DishResponse updateDish(@Min(1) Long id, DishRequest request);
 
     void deleteDish(@Min(1) Long id);
 
-    DishResponse createDishForUserId(DishRequest request);
+    DishResponse createDishForUser(DishRequest request, Long userId);
 
-    List<DishResponse> getDishesByUserId(@Min(1) Long userId);
+    List<DishResponse> getDishesByUser(@Min(1) Long userId);
 }

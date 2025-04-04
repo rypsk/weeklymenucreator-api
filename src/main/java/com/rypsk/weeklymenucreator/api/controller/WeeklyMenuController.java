@@ -25,9 +25,9 @@ public class WeeklyMenuController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<WeeklyMenuResponse> getWeeklyMenuById(@PathVariable @Min(1) Long id) {
+    public ResponseEntity<WeeklyMenuResponse> getWeeklyMenu(@PathVariable @Min(1) Long id) {
         try {
-            WeeklyMenuResponse response = weeklyMenuService.getWeeklyMenuById(id);
+            WeeklyMenuResponse response = weeklyMenuService.getWeeklyMenu(id);
             return ResponseEntity.ok(response);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -50,13 +50,13 @@ public class WeeklyMenuController {
     @Transactional
     @PostMapping("/user/{id}")
     @ResponseStatus(HttpStatus.CREATED)
-    public WeeklyMenuResponse createWeeklyMenuForUserId(@RequestBody WeeklyMenuRequest request, @PathVariable(ID) @Min(1) Long userId) {
-        return weeklyMenuService.createWeeklyMenuForUserId(request, userId);
+    public WeeklyMenuResponse createWeeklyMenuForUser(@RequestBody WeeklyMenuRequest request, @PathVariable(ID) @Min(1) Long userId) {
+        return weeklyMenuService.createWeeklyMenuForUser(request, userId);
     }
 
     @GetMapping("/user/{id}")
-    public List<WeeklyMenuResponse> getWeeklyMenusByUserId(@PathVariable(ID) @Min(1) Long userId) {
-        return weeklyMenuService.getWeeklyMenusByUserId(userId);
+    public List<WeeklyMenuResponse> getWeeklyMenusByUser(@PathVariable(ID) @Min(1) Long userId) {
+        return weeklyMenuService.getWeeklyMenusByUser(userId);
     }
 
 

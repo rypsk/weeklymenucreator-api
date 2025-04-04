@@ -26,7 +26,7 @@ public class DailyMenuServiceImpl implements DailyMenuService {
 
     @Override
     @Transactional
-    public DailyMenuResponse createDailyMenuForUserId(DailyMenuRequest request, Long userId) {
+    public DailyMenuResponse createDailyMenuForUser(DailyMenuRequest request, Long userId) {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -39,7 +39,7 @@ public class DailyMenuServiceImpl implements DailyMenuService {
     }
 
     @Override
-    public List<DailyMenuResponse> getDailyMenusByUserId(Long userId) {
+    public List<DailyMenuResponse> getDailyMenusByUser(Long userId) {
         return dailyMenuRepository.findByUserId(userId)
                 .stream()
                 .map(this::mapToResponse)
@@ -47,7 +47,7 @@ public class DailyMenuServiceImpl implements DailyMenuService {
     }
 
     @Override
-    public DailyMenuResponse getDailyMenuById(Long id) {
+    public DailyMenuResponse getDailyMenu(Long id) {
         DailyMenu dailyMenu = dailyMenuRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Daily menu not found"));
         return mapToResponse(dailyMenu);

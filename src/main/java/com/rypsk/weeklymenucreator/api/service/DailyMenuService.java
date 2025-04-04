@@ -8,11 +8,11 @@ import java.util.List;
 
 public interface DailyMenuService {
 
-    DailyMenuResponse createDailyMenuForUserId(DailyMenuRequest request, @Min(1) Long userId);
+    DailyMenuResponse createDailyMenuForUser(DailyMenuRequest request, @Min(1) Long userId);
 
-    List<DailyMenuResponse> getDailyMenusByUserId(@Min(1) Long userId);
+    List<DailyMenuResponse> getDailyMenusByUser(@Min(1) Long userId);
 
-    DailyMenuResponse getDailyMenuById(@Min(1) Long id);
+    DailyMenuResponse getDailyMenu(@Min(1) Long id);
 
     DailyMenuResponse updateDailyMenu(@Min(1) Long id, DailyMenuRequest request);
 

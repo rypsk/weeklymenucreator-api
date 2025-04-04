@@ -6,11 +6,11 @@ import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuResponse;
 import java.util.List;
 
 public interface WeeklyMenuService {
-    WeeklyMenuResponse createWeeklyMenuForUserId(WeeklyMenuRequest weeklyMenuRequest, Long userId);
+    WeeklyMenuResponse createWeeklyMenuForUser(WeeklyMenuRequest weeklyMenuRequest, Long userId);
 
-    List<WeeklyMenuResponse> getWeeklyMenusByUserId(Long userId);
+    List<WeeklyMenuResponse> getWeeklyMenusByUser(Long userId);
 
-    WeeklyMenuResponse getWeeklyMenuById(Long id);
+    WeeklyMenuResponse getWeeklyMenu(Long id);
 
     WeeklyMenuResponse updateWeeklyMenu(Long id, WeeklyMenuRequest weeklyMenuRequest);
 

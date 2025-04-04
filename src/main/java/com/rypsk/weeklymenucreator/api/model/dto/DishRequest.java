@@ -1,6 +1,7 @@
 package com.rypsk.weeklymenucreator.api.model.dto;
 
 import com.rypsk.weeklymenucreator.api.model.entity.Receipt;
+import com.rypsk.weeklymenucreator.api.model.enumeration.FoodType;
 
 /**
  * DTO for Dish requests, used for creating, updating, and managing Dish entities.
@@ -15,7 +16,7 @@ public record DishRequest(
         String name,
         String description,
         Receipt receipt,
-        String foodType,
+        FoodType foodType,
         Long userId
 ) {
 }

@@ -22,15 +22,13 @@ public class DailyMenuController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DailyMenuResponse> getDailyMenuById(@PathVariable(ID) @Min(1) Long id) {
-        DailyMenuResponse dailyMenu = dailyMenuService.getDailyMenuById(id);
-        return ResponseEntity.ok(dailyMenu);
+    public ResponseEntity<DailyMenuResponse> getDailyMenu(@PathVariable(ID) @Min(1) Long id) {
+        return ResponseEntity.ok(dailyMenuService.getDailyMenu(id));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<DailyMenuResponse> updateDailyMenu(@PathVariable(ID) @Min(1) Long id, @RequestBody DailyMenuRequest request) {
-        DailyMenuResponse updatedDailyMenu = dailyMenuService.updateDailyMenu(id, request);
-        return ResponseEntity.ok(updatedDailyMenu);
+        return ResponseEntity.ok(dailyMenuService.updateDailyMenu(id, request));
     }
 
     @DeleteMapping("/{id}")
@@ -41,14 +39,12 @@ public class DailyMenuController {
 
     @PostMapping("/user/{id}")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<DailyMenuResponse> createDailyMenuForUserId(@RequestBody DailyMenuRequest request, @PathVariable(ID) @Min(1) Long userId) {
-        DailyMenuResponse dailyMenu = dailyMenuService.createDailyMenuForUserId(request, userId);
-        return ResponseEntity.ok(dailyMenu);
+    public ResponseEntity<DailyMenuResponse> createDailyMenuForUser(@RequestBody DailyMenuRequest request, @PathVariable(ID) @Min(1) Long userId) {
+        return ResponseEntity.ok(dailyMenuService.createDailyMenuForUser(request, userId));
     }
 
     @GetMapping("/user/{id}")
-    public ResponseEntity<List<DailyMenuResponse>> getDailyMenusByUserId(@PathVariable(ID) @Min(1) Long userId) {
-        List<DailyMenuResponse> dailyMenus = dailyMenuService.getDailyMenusByUserId(userId);
-        return ResponseEntity.ok(dailyMenus);
+    public ResponseEntity<List<DailyMenuResponse>> getDailyMenusByUser(@PathVariable(ID) @Min(1) Long userId) {
+        return ResponseEntity.ok(dailyMenuService.getDailyMenusByUser(userId));
     }
 }

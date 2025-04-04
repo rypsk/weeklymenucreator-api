@@ -24,50 +24,46 @@ public class DishServiceImpl implements DishService {
     }
 
     @Override
-    public DishResponse getDishById(Long id) {
+    public DishResponse getDish(Long id) {
         Dish dish = dishRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dish not found"));
+                .orElseThrow(() -> new RuntimeException("Dish not found."));
         return mapToResponse(dish);
     }
 
     @Override
     public DishResponse updateDish(Long id, DishRequest request) {
         Dish dish = dishRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dish not found"));
-
-        dish.setName(request.getName());
-        dish.setDescription(request.getDescription());
-        dish.setRecipe(request.getRecipe());
-        dish.setDietType(request.getDietType());
-
+                .orElseThrow(() -> new RuntimeException("Dish not found."));
+        dish.setName(request.name());
+        dish.setDescription(request.description());
+        dish.setReceipt(request.receipt());
+        dish.setFoodType(request.foodType());
         return mapToResponse(dishRepository.save(dish));
     }
 
     @Override
     public void deleteDish(Long id) {
         if (!dishRepository.existsById(id)) {
-            throw new RuntimeException("Dish not found");
+            throw new RuntimeException("Dish not found.");
         }
         dishRepository.deleteById(id);
     }
 
     @Override
-    public DishResponse createDishForUserId(DishRequest request) {
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+    public DishResponse createDishForUser(DishRequest request, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found."));
         Dish dish = new Dish();
-        dish.setName(request.getName());
-        dish.setDescription(request.getDescription());
-        dish.setRecipe(request.getRecipe());
-        dish.setDietType(request.getDietType());
+        dish.setName(request.name());
+        dish.setDescription(request.description());
+        dish.setReceipt(request.receipt());
+        dish.setFoodType(request.foodType());
         dish.setUser(user);
-
         return mapToResponse(dishRepository.save(dish));
     }
 
     @Override
-    public List<DishResponse> getDishesByUserId(Long userId) {
+    public List<DishResponse> getDishesByUser(Long userId) {
         return dishRepository.findByUserId(userId)
                 .stream()
                 .map(this::mapToResponse)
@@ -79,8 +75,8 @@ public class DishServiceImpl implements DishService {
                 dish.getId(),
                 dish.getName(),
                 dish.getDescription(),
-                dish.getRecipe(),
-                dish.getDietType(),
+                dish.getReceipt(),
+                dish.getFoodType(),
                 dish.getUser().getId()
         );
     }

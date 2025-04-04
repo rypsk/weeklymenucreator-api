@@ -23,16 +23,14 @@ public class DishController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DishResponse> getDishById(@PathVariable @Min(1) Long id) {
-        DishResponse dish = dishService.getDishById(id);
-        return ResponseEntity.ok(dish);
+    public ResponseEntity<DishResponse> getDish(@PathVariable @Min(1) Long id) {
+        return ResponseEntity.ok(dishService.getDish(id));
     }
 
     @Transactional
     @PutMapping("/{id}")
     public ResponseEntity<DishResponse> updateDish(@PathVariable @Min(1) Long id, @RequestBody DishRequest request) {
-        DishResponse updatedDish = dishService.updateDish(id, request);
-        return ResponseEntity.ok(updatedDish);
+        return ResponseEntity.ok(dishService.updateDish(id, request));
     }
 
     @DeleteMapping("/{id}")
@@ -44,14 +42,12 @@ public class DishController {
     @Transactional
     @PostMapping("/user/{id}")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<DishResponse> createDishForUserId(@RequestBody DishRequest request, @PathVariable(ID) @Min(1) Long userId) {
-        DishResponse dish = dishService.createDishForUserId(request);
-        return ResponseEntity.ok(dish);
+    public ResponseEntity<DishResponse> createDishForUser(@RequestBody DishRequest request, @PathVariable(ID) @Min(1) Long userId) {
+        return ResponseEntity.ok(dishService.createDishForUser(request, userId));
     }
 
     @GetMapping("/user/{id}")
-    public ResponseEntity<List<DishResponse>> getDishesByUserId(@PathVariable(ID) @Min(1) Long userId) {
-        List<DishResponse> dishes = dishService.getDishesByUserId(userId);
-        return ResponseEntity.ok(dishes);
+    public ResponseEntity<List<DishResponse>> getDishesByUser(@PathVariable(ID) @Min(1) Long userId) {
+        return ResponseEntity.ok(dishService.getDishesByUser(userId));
     }
 }

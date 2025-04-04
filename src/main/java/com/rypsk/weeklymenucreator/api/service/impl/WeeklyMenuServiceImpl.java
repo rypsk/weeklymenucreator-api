@@ -26,7 +26,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
 
     @Override
     @Transactional
-    public WeeklyMenuResponse createWeeklyMenuForUserId(WeeklyMenuRequest weeklyMenuRequest, Long userId) {
+    public WeeklyMenuResponse createWeeklyMenuForUser(WeeklyMenuRequest weeklyMenuRequest, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found."));
 
@@ -40,7 +40,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     }
 
     @Override
-    public List<WeeklyMenuResponse> getWeeklyMenusByUserId(Long userId) {
+    public List<WeeklyMenuResponse> getWeeklyMenusByUser(Long userId) {
         return weeklyMenuRepository.findByUserId(userId)
                 .stream()
                 .map(this::mapToResponse)
@@ -48,7 +48,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     }
 
     @Override
-    public WeeklyMenuResponse getWeeklyMenuById(Long id) {
+    public WeeklyMenuResponse getWeeklyMenu(Long id) {
         WeeklyMenu weeklyMenu = weeklyMenuRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Weekly menu not found."));
         return mapToResponse(weeklyMenu);
