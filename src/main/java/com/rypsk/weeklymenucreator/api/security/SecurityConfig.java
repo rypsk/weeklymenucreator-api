@@ -36,14 +36,16 @@ public class SecurityConfig {
         return httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(Customizer.withDefaults())
-                .headers(httpSecurityHeadersConfigurer -> {
-                    httpSecurityHeadersConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable);
-                })
+                .headers(httpSecurityHeadersConfigurer -> httpSecurityHeadersConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(request ->{
                     request.requestMatchers("/h2-console/**").permitAll();
                     request.requestMatchers(HttpMethod.POST, "/auth/sign-up").permitAll();
-                    request.requestMatchers(HttpMethod.POST, "/auth/sign-in").permitAll();;
+                    request.requestMatchers(HttpMethod.POST, "/auth/sign-in").permitAll();
+                    request.requestMatchers(
+                            "/v3/api-docs/**",
+                            "/swagger-ui/**",
+                            "/swagger-ui.html").permitAll();
                     request.anyRequest().authenticated();
                 })
                 .addFilterBefore(new JwtTokenValidator(jwtUtil), BasicAuthenticationFilter.class)
