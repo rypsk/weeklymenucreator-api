@@ -74,12 +74,10 @@ public class UserDetailServiceImpl implements UserDetailsService {
     public AuthResponse signUp(@Valid AuthSignUpRequest authSignUpRequest) {
         String username = authSignUpRequest.username();
         String password = authSignUpRequest.password();
-        String email = authSignUpRequest.email();
         String role = Role.ROLE_USER.name();
         User user = User.builder()
                 .username(username)
                 .password(passwordEncoder.encode(password))
-                .email(email)
                 .role(Role.ROLE_USER)
                 .isEnabled(true)
                 .isAccountNonLocked(true)

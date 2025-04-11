@@ -3,16 +3,12 @@ package com.rypsk.weeklymenucreator.api.controller;
 import com.rypsk.weeklymenucreator.api.model.dto.IngredientRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.IngredientResponse;
 import com.rypsk.weeklymenucreator.api.service.IngredientService;
-import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.Min;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/v1/ingredient")
+@RequestMapping("/api/v1/ingredients")
 public class IngredientController {
 
     private static final String ID = "id";
@@ -36,17 +32,5 @@ public class IngredientController {
     public ResponseEntity<Void> deleteIngredient(@PathVariable @Min(1) Long id){
         ingredientService.deleteIngredient(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @Transactional
-    @PostMapping("/user/{id}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<IngredientResponse> createIngredientForUser(@RequestBody IngredientRequest request, @PathVariable(ID) @Min(1) Long userId) {
-        return ResponseEntity.ok(ingredientService.createIngredientForUser(request, userId));
-    }
-
-    @GetMapping("/user/{id}")
-    public ResponseEntity<List<IngredientResponse>> getIngredientsByUser(@PathVariable(ID) @Min(1) Long userId) {
-        return ResponseEntity.ok(ingredientService.getIngredientsByUser(userId));
     }
 }

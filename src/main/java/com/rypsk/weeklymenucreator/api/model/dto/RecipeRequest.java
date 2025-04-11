@@ -8,7 +8,7 @@ import com.rypsk.weeklymenucreator.api.model.enumeration.Season;
 
 import java.util.List;
 
-public record ReceiptRequest(
+public record RecipeRequest(
         String name,
         String description, List<Ingredient> ingredients,
         Difficulty difficulty,

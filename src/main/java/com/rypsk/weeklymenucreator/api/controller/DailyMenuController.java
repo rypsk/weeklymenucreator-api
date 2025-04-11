@@ -4,14 +4,11 @@ import com.rypsk.weeklymenucreator.api.model.dto.DailyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.DailyMenuResponse;
 import com.rypsk.weeklymenucreator.api.service.DailyMenuService;
 import jakarta.validation.constraints.Min;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/v1/daily-menu")
+@RequestMapping("/api/v1/daily-menus")
 public class DailyMenuController {
 
     private static final String ID = "id";
@@ -37,14 +34,4 @@ public class DailyMenuController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/user/{id}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<DailyMenuResponse> createDailyMenuForUser(@RequestBody DailyMenuRequest request, @PathVariable(ID) @Min(1) Long userId) {
-        return ResponseEntity.ok(dailyMenuService.createDailyMenuForUser(request, userId));
-    }
-
-    @GetMapping("/user/{id}")
-    public ResponseEntity<List<DailyMenuResponse>> getDailyMenusByUser(@PathVariable(ID) @Min(1) Long userId) {
-        return ResponseEntity.ok(dailyMenuService.getDailyMenusByUser(userId));
-    }
 }

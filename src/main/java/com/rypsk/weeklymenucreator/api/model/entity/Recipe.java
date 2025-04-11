@@ -1,8 +1,6 @@
 package com.rypsk.weeklymenucreator.api.model.entity;
 
-import com.rypsk.weeklymenucreator.api.model.enumeration.DietType;
 import com.rypsk.weeklymenucreator.api.model.enumeration.Difficulty;
-import com.rypsk.weeklymenucreator.api.model.enumeration.DishType;
 import com.rypsk.weeklymenucreator.api.model.enumeration.Season;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -13,7 +11,7 @@ import java.util.List;
 @Entity
 @Getter
 @Setter
-public class Receipt {
+public class Recipe {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,7 +19,7 @@ public class Receipt {
     private String name;
     private String description;
 
-    @OneToMany(mappedBy = "receipt", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "recipe", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Ingredient> ingredients;
 
     @Enumerated(EnumType.STRING)
@@ -30,12 +28,6 @@ public class Receipt {
     @ElementCollection
     @Enumerated(EnumType.STRING)
     private List<Season> seasons;
-
-    @Enumerated(EnumType.STRING)
-    private DishType dishType;
-
-    @Enumerated(EnumType.STRING)
-    private DietType dietType;
 
     @Lob
     private byte[] image;

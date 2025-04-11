@@ -2,6 +2,9 @@ package com.rypsk.weeklymenucreator.api.service;
 
 import com.rypsk.weeklymenucreator.api.model.dto.DishRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.DishResponse;
+import com.rypsk.weeklymenucreator.api.model.entity.Dish;
+import com.rypsk.weeklymenucreator.api.model.enumeration.DietType;
+import com.rypsk.weeklymenucreator.api.model.enumeration.DishType;
 import jakarta.validation.constraints.Min;
 
 import java.util.List;
@@ -15,5 +18,7 @@ public interface DishService {
 
     DishResponse createDishForUser(DishRequest request, Long userId);
 
-    List<DishResponse> getDishesByUser(@Min(1) Long userId);
+    List<DishResponse> getDishesForUser(Long userId);
+
+    List<Dish> getDishesByDietTypeAndDishType(DietType dietType, DishType dishType, Long userId);
 }

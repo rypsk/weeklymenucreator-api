@@ -13,7 +13,7 @@ public interface IngredientService {
 
     void deleteIngredient(@Min(1) Long id);
 
-    IngredientResponse createIngredientForUser(IngredientRequest request, @Min(1) Long userId);
+    IngredientResponse createIngredientForUser(IngredientRequest request, Long userId);
 
-    List<IngredientResponse> getIngredientsByUser(@Min(1) Long userId);
+    List<IngredientResponse> getIngredientesForUser(Long userId);
 }
