@@ -9,6 +9,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -32,7 +33,7 @@ public class JwtUtil {
     public String generateToken(Authentication authentication) {
         Algorithm algorithm = Algorithm.HMAC256(this.secret);
 
-        String username = authentication.getPrincipal().toString();
+        String username = ((UserDetails) authentication.getPrincipal()).getUsername();
         String authorities = authentication.getAuthorities()
                 .stream()
                 .map(GrantedAuthority::getAuthority)

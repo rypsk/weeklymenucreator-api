@@ -40,8 +40,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(request ->{
                     request.requestMatchers("/h2-console/**").permitAll();
-                    request.requestMatchers(HttpMethod.POST, "/auth/sign-up").permitAll();
-                    request.requestMatchers(HttpMethod.POST, "/auth/sign-in").permitAll();
+                    request.requestMatchers(HttpMethod.POST, "/api/v1/auth/sign-up").permitAll();
+                    request.requestMatchers(HttpMethod.POST, "/api/v1/auth/sign-in").permitAll();
                     request.requestMatchers(
                             "/v3/api-docs/**",
                             "/swagger-ui/**",

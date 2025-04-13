@@ -19,7 +19,7 @@ public class Recipe {
     private String name;
     private String description;
 
-    @OneToMany(mappedBy = "recipe", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "recipe", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<Ingredient> ingredients;
 
     @Enumerated(EnumType.STRING)

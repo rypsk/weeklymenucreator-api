@@ -7,6 +7,7 @@ import com.rypsk.weeklymenucreator.api.model.entity.DailyMenu;
 import com.rypsk.weeklymenucreator.api.model.entity.Dish;
 import com.rypsk.weeklymenucreator.api.model.entity.User;
 import com.rypsk.weeklymenucreator.api.model.entity.WeeklyMenu;
+import com.rypsk.weeklymenucreator.api.model.enumeration.DayOfWeek;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DietType;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DishType;
 import com.rypsk.weeklymenucreator.api.repository.UserRepository;
@@ -104,7 +105,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
         LocalDate startDate = request.startDate();
         LocalDate endDate = request.endDate();
         DietType dietType = request.dietType();
-        int weekMenuDays = startDate.until(endDate).getDays();
+        int weekMenuDays = startDate.until(endDate).getDays()+1;
         Set<DishType> dishTypes = request.dishTypes();
 
         WeeklyMenu weeklyMenu = new WeeklyMenu();
@@ -114,10 +115,11 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
             DailyMenu dailyMenu = new DailyMenu();
             LocalDate today = startDate.plusDays(i);
             dailyMenu.setDate(today);
-
+            dailyMenu.setDayOfWeek(DayOfWeek.valueOf(today.getDayOfWeek().name()));
             List<Dish> dishes = getDishes(userId, dishTypes, dietType);
             dailyMenu.setDishes(dishes);
             dailyMenus.add(dailyMenu);
+            dailyMenu.setUser(user);
         }
 
         weeklyMenu.setDailyMenus(dailyMenus);
@@ -149,6 +151,9 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
 
     private Dish getDishByType(DishType dishType, DietType dietType, Long userId) {
         List<Dish> availableDishes = dishService.getDishesByDietTypeAndDishType(dietType, dishType, userId);
+        if (availableDishes.isEmpty()) {
+            throw new IllegalStateException("No dishes found for " + dishType + " and " + dietType + " for user " + userId);
+        }
         return availableDishes.get(new Random().nextInt(availableDishes.size()));
     }
 

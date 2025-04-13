@@ -68,7 +68,7 @@ public class UserDetailServiceImpl implements UserDetailsService {
         Authentication authentication = getAuthentication(username, password);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String token = jwtUtil.generateToken(authentication);
-        return new AuthResponse(username, "User signIn succesfully", token, true);
+        return new AuthResponse(username, "User signIn successfully", token, true);
     }
 
     public AuthResponse signUp(@Valid AuthSignUpRequest authSignUpRequest) {
@@ -90,6 +90,6 @@ public class UserDetailServiceImpl implements UserDetailsService {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword(), grantedAuthorities);
         String token = jwtUtil.generateToken(authentication);
-        return new AuthResponse(user.getUsername(), "User signUp succesfully", token, true);
+        return new AuthResponse(user.getUsername(), "User signUp successfully", token, true);
     }
 }

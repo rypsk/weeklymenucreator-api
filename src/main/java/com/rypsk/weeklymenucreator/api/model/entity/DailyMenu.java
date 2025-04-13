@@ -17,8 +17,12 @@ public class DailyMenu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(fetch = FetchType.EAGER)
-    @JoinColumn(name = "daily_menu_id")
+    @ManyToMany
+    @JoinTable(
+            name = "daily_menu_dishes",
+            joinColumns = @JoinColumn(name = "daily_menu_id"),
+            inverseJoinColumns = @JoinColumn(name = "dishes_id")
+    )
     private List<Dish> dishes;
 
     @Enumerated(EnumType.STRING)
