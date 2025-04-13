@@ -1,9 +1,6 @@
 package com.rypsk.weeklymenucreator.api.service.impl;
 
-import com.lowagie.text.Chunk;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Paragraph;
+import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.rypsk.weeklymenucreator.api.model.dto.AutoGenerateWeeklyMenuRequest;
@@ -33,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -202,7 +200,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     private byte[] exportToPdf(WeeklyMenu weeklyMenu) {
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
 
-            Document document = new Document();
+            Document document = new Document(PageSize.A4.rotate());
             PdfWriter.getInstance(document, byteArrayOutputStream);
             document.open();
 
