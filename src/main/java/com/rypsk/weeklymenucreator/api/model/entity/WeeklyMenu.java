@@ -16,7 +16,7 @@ public class WeeklyMenu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(cascade = CascadeType.PERSIST)
+    @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinColumn(name = "weekly_menu_id")
     private List<DailyMenu> dailyMenus;
 

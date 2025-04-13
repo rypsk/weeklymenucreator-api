@@ -4,6 +4,7 @@ import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuResponse;
 import com.rypsk.weeklymenucreator.api.service.WeeklyMenuService;
 import jakarta.validation.constraints.Min;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,10 @@ public class WeeklyMenuController {
         weeklyMenuService.deleteWeeklyMenu(id);
     }
 
-
+    @GetMapping("/{id}/export/{format}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<byte[]> exportWeeklyMenu(@PathVariable Long id, @PathVariable String format){
+        return weeklyMenuService.exportWeeklyMenu(id, format);
+    }
 
 }

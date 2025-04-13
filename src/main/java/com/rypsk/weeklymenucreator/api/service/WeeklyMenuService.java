@@ -3,6 +3,7 @@ package com.rypsk.weeklymenucreator.api.service;
 import com.rypsk.weeklymenucreator.api.model.dto.AutoGenerateWeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuResponse;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
@@ -19,4 +20,6 @@ public interface WeeklyMenuService {
     List<WeeklyMenuResponse> getWeeklyMenusForUser(Long userId);
 
     WeeklyMenuResponse autoGenerateWeeklyMenuForUser(AutoGenerateWeeklyMenuRequest request, Long userId);
+
+    ResponseEntity<byte[]> exportWeeklyMenu(Long id, String format);
 }

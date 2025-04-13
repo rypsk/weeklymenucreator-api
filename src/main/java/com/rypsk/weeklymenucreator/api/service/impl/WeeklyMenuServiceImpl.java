@@ -1,5 +1,11 @@
 package com.rypsk.weeklymenucreator.api.service.impl;
 
+import com.lowagie.text.Chunk;
+import com.lowagie.text.Document;
+import com.lowagie.text.DocumentException;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.pdf.PdfPTable;
+import com.lowagie.text.pdf.PdfWriter;
 import com.rypsk.weeklymenucreator.api.model.dto.AutoGenerateWeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuResponse;
@@ -13,12 +19,18 @@ import com.rypsk.weeklymenucreator.api.model.enumeration.DishType;
 import com.rypsk.weeklymenucreator.api.repository.UserRepository;
 import com.rypsk.weeklymenucreator.api.repository.WeeklyMenuRepository;
 import com.rypsk.weeklymenucreator.api.service.WeeklyMenuService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -157,6 +169,94 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
         return availableDishes.get(new Random().nextInt(availableDishes.size()));
     }
 
+    @Override
+    public ResponseEntity<byte[]> exportWeeklyMenu(Long id, String format) {
+        User user = getCurrentUser();
+        WeeklyMenu weeklyMenu = weeklyMenuRepository.findById(id).orElseThrow(() -> new RuntimeException("Weekly menu not found."));
+        if (!weeklyMenu.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You cannot export this weeklyMenu.");
+        }
+        byte[] content;
+        MediaType mediaType;
+        String filename = "weekly-menu." + format.toLowerCase();
+
+        switch (format.toLowerCase()) {
+            case "pdf" -> {
+                content = exportToPdf(weeklyMenu);
+                mediaType = MediaType.APPLICATION_PDF;
+            }
+            case "excel", "xlsx" -> {
+                content = exportToExcel(weeklyMenu);
+                mediaType = MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            }
+            default -> throw new IllegalArgumentException("Unsupported format: " + format);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(mediaType);
+        headers.setContentDispositionFormData("attachment", filename);
+
+        return new ResponseEntity<>(content, headers, HttpStatus.OK);
+    }
+
+    private byte[] exportToPdf(WeeklyMenu weeklyMenu) {
+        try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream()) {
+
+            Document document = new Document();
+            PdfWriter.getInstance(document, byteArrayOutputStream);
+            document.open();
+
+            document.add(new Paragraph("Weekly Menu: " + weeklyMenu.getId()));
+            document.add(new Paragraph("Start Date: " + weeklyMenu.getStartDate()));
+            document.add(new Paragraph("End Date: " + weeklyMenu.getEndDate()));
+            document.add(Chunk.NEWLINE);
+
+            PdfPTable table = new PdfPTable(weeklyMenu.getDailyMenus().size() + 1);
+
+            table.addCell("Dish Type");
+            for (DailyMenu dailyMenu : weeklyMenu.getDailyMenus()) {
+                table.addCell(dailyMenu.getDayOfWeek().toString());
+            }
+
+            Set<String> dishTypes = new HashSet<>();
+            for (DailyMenu dailyMenu : weeklyMenu.getDailyMenus()) {
+                for (Dish dish : dailyMenu.getDishes()) {
+                    dishTypes.add(String.valueOf(dish.getDishType()));
+                }
+            }
+
+            for (String dishType : dishTypes) {
+                table.addCell(dishType);
+                for (DailyMenu dailyMenu : weeklyMenu.getDailyMenus()) {
+                    boolean foundDish = false;
+                    for (Dish dish : dailyMenu.getDishes()) {
+                        if (String.valueOf(dish.getDishType()).equals(dishType)) {
+                            table.addCell(dish.getName());
+                            foundDish = true;
+                            break;
+                        }
+                    }
+                    if (!foundDish) {
+                        table.addCell("");
+                    }
+                }
+            }
+
+            document.add(table);
+            document.close();
+            return byteArrayOutputStream.toByteArray();
+
+        } catch (DocumentException e) {
+            throw new RuntimeException("Error generating PDF", e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private byte[] exportToExcel(WeeklyMenu weeklyMenu) {
+        return null;
+    }
+
     private WeeklyMenuResponse mapToResponse(WeeklyMenu weeklyMenu) {
         return new WeeklyMenuResponse(
                 weeklyMenu.getId(),
@@ -166,6 +266,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
                 weeklyMenu.getDailyMenus()
         );
     }
+
 
 
 }
