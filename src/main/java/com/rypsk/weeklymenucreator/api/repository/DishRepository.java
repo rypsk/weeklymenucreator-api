@@ -14,4 +14,6 @@ public interface DishRepository extends JpaRepository<Dish, Long> {
     Collection<Dish> findByUserId(Long userId);
 
     List<Dish> findByDietTypeAndDishTypeAndUserId(DietType dietType, DishType dishType, Long userId);
+
+    List<Dish> findByDishTypeAndUserId(DishType dishType, Long userId);
 }

@@ -97,6 +97,11 @@ public class DishServiceImpl implements DishService {
         return dishRepository.findByDietTypeAndDishTypeAndUserId(dietType, dishType, userId);
     }
 
+    @Override
+    public List<Dish> getDishesByDishType(DishType dishType, Long userId) {
+        return dishRepository.findByDishTypeAndUserId(dishType, userId);
+    }
+
     private DishResponse mapToResponse(Dish dish) {
         return new DishResponse(
                 dish.getId(),

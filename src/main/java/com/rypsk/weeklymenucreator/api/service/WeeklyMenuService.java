@@ -21,5 +21,10 @@ public interface WeeklyMenuService {
 
     WeeklyMenuResponse autoGenerateWeeklyMenuForUser(AutoGenerateWeeklyMenuRequest request, Long userId);
 
+    WeeklyMenuResponse autoGenerateWeeklyMenuForUser(Long id);
+
     ResponseEntity<byte[]> exportWeeklyMenu(Long id, String format);
+
+    void sendWeeklyMenuByEmail(Long id);
+
 }

@@ -21,4 +21,6 @@ public interface DishService {
     List<DishResponse> getDishesForUser(Long userId);
 
     List<Dish> getDishesByDietTypeAndDishType(DietType dietType, DishType dishType, Long userId);
+
+    List<Dish> getDishesByDishType(DishType dishType, Long userId);
 }

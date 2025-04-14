@@ -3,6 +3,7 @@ package com.rypsk.weeklymenucreator.api.service.impl;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import com.rypsk.weeklymenucreator.api.model.dto.Attachment;
 import com.rypsk.weeklymenucreator.api.model.dto.AutoGenerateWeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuResponse;
@@ -15,7 +16,10 @@ import com.rypsk.weeklymenucreator.api.model.enumeration.DietType;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DishType;
 import com.rypsk.weeklymenucreator.api.repository.UserRepository;
 import com.rypsk.weeklymenucreator.api.repository.WeeklyMenuRepository;
+import com.rypsk.weeklymenucreator.api.service.DishService;
+import com.rypsk.weeklymenucreator.api.service.EmailService;
 import com.rypsk.weeklymenucreator.api.service.WeeklyMenuService;
+import jakarta.mail.MessagingException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,12 +42,14 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
 
     private final WeeklyMenuRepository weeklyMenuRepository;
     private final UserRepository userRepository;
-    private final DishServiceImpl dishService;
+    private final DishService dishService;
+    private final EmailService emailService;
 
-    public WeeklyMenuServiceImpl(WeeklyMenuRepository weeklyMenuRepository, UserRepository userRepository, DishServiceImpl dishService) {
+    public WeeklyMenuServiceImpl(WeeklyMenuRepository weeklyMenuRepository, UserRepository userRepository, DishServiceImpl dishService, EmailService emailService) {
         this.weeklyMenuRepository = weeklyMenuRepository;
         this.userRepository = userRepository;
         this.dishService = dishService;
+        this.emailService = emailService;
     }
 
     private User getCurrentUser() {
@@ -142,27 +148,62 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
         return mapToResponse(savedWeeklyMenu);
     }
 
+    @Override
+    public WeeklyMenuResponse autoGenerateWeeklyMenuForUser(Long userId) {
+        LocalDate startDate = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
+        LocalDate endDate = startDate.plusDays(7);
+        Set<DishType> dishTypes = new HashSet<>();
+        dishTypes.add(DishType.BREAKFAST);
+        dishTypes.add(DishType.LUNCH);
+        dishTypes.add(DishType.DINNER);
+        AutoGenerateWeeklyMenuRequest request = new AutoGenerateWeeklyMenuRequest(startDate, endDate, dishTypes, null, null);
+        return autoGenerateWeeklyMenuForUser(request, userId);
+    }
+
     private List<Dish> getDishes(Long userId, Set<DishType> dishTypes, DietType dietType) {
         List<Dish> dishes = new ArrayList<>();
         if(dishTypes.contains(DishType.BREAKFAST)){
-            Dish breakfastDish = getDishByType(DishType.BREAKFAST, dietType, userId);
+            Dish breakfastDish;
+            if(dietType != null){
+                breakfastDish = getDishByDietTypeAndDishType(DishType.BREAKFAST, dietType, userId);
+            }else{
+                breakfastDish = getDishByDishType(DishType.BREAKFAST, userId);
+            }
             dishes.add(breakfastDish);
         }
+        Dish lunchDish;
         if(dishTypes.contains(DishType.LUNCH)){
-            Dish lunchDish = getDishByType(DishType.LUNCH, dietType, userId);
+            if(dietType != null){
+                lunchDish = getDishByDietTypeAndDishType(DishType.LUNCH, dietType, userId);
+            }else{
+                lunchDish = getDishByDishType(DishType.LUNCH, userId);
+            }
             dishes.add(lunchDish);
         }
+        Dish dinnerDish;
         if(dishTypes.contains(DishType.DINNER)){
-            Dish dinnerDish = getDishByType(DishType.DINNER, dietType, userId);
+            if(dietType != null){
+                dinnerDish = getDishByDietTypeAndDishType(DishType.DINNER, dietType, userId);
+            }else{
+                dinnerDish = getDishByDishType(DishType.DINNER, userId);
+            }
             dishes.add(dinnerDish);
         }
         return dishes;
     }
 
-    private Dish getDishByType(DishType dishType, DietType dietType, Long userId) {
+    private Dish getDishByDietTypeAndDishType(DishType dishType, DietType dietType, Long userId) {
         List<Dish> availableDishes = dishService.getDishesByDietTypeAndDishType(dietType, dishType, userId);
         if (availableDishes.isEmpty()) {
             throw new IllegalStateException("No dishes found for " + dishType + " and " + dietType + " for user " + userId);
+        }
+        return availableDishes.get(new Random().nextInt(availableDishes.size()));
+    }
+
+    private Dish getDishByDishType(DishType dishType, Long userId){
+        List<Dish> availableDishes = dishService.getDishesByDishType(dishType, userId);
+        if (availableDishes.isEmpty()) {
+            throw new IllegalStateException("No dishes found for " + dishType + " for user " + userId);
         }
         return availableDishes.get(new Random().nextInt(availableDishes.size()));
     }
@@ -253,6 +294,28 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
 
     private byte[] exportToExcel(WeeklyMenu weeklyMenu) {
         return null;
+    }
+
+    @Override
+    public void sendWeeklyMenuByEmail(Long id) {
+        User user = getCurrentUser();
+        WeeklyMenu weeklyMenu = weeklyMenuRepository.findById(id).orElseThrow(() -> new RuntimeException("Weekly menu not found."));
+        if (!weeklyMenu.getUser().getId().equals(user.getId())) {
+            throw new AccessDeniedException("You cannot send by email this weeklyMenu.");
+        }
+        byte[] pdfBytes = exportToPdf(weeklyMenu);
+
+        Attachment attachment = new Attachment("weekly-menu-" + weeklyMenu.getId() + ".pdf", "application/pdf", pdfBytes);
+
+        String subject = "Your Weekly Menu (ID: " + weeklyMenu.getId() + ")";
+        String body = "Here is your weekly menu as requested.";
+
+        try {
+            emailService.sendEmail(user.getUsername(), subject, body, List.of(attachment));
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     private WeeklyMenuResponse mapToResponse(WeeklyMenu weeklyMenu) {

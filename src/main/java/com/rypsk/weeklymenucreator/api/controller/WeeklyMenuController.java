@@ -31,6 +31,7 @@ public class WeeklyMenuController {
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
     public void deleteWeeklyMenu(@PathVariable @Min(1) Long id) {
         weeklyMenuService.deleteWeeklyMenu(id);
     }
@@ -39,6 +40,13 @@ public class WeeklyMenuController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<byte[]> exportWeeklyMenu(@PathVariable Long id, @PathVariable String format){
         return weeklyMenuService.exportWeeklyMenu(id, format);
+    }
+
+    @PostMapping("/{id}/email")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<String> sendWeeklyMenuByEmail(@PathVariable Long id){
+        weeklyMenuService.sendWeeklyMenuByEmail(id);
+        return ResponseEntity.ok().build();
     }
 
 }
