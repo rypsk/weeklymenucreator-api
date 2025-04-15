@@ -45,7 +45,7 @@ public class WeeklyMenuController {
     @PostMapping("/{id}/email")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<String> sendWeeklyMenuByEmail(@PathVariable Long id){
-        weeklyMenuService.sendWeeklyMenuByEmail(id);
+        weeklyMenuService.sendWeeklyMenuByEmail(id, null);
         return ResponseEntity.ok().build();
     }
 

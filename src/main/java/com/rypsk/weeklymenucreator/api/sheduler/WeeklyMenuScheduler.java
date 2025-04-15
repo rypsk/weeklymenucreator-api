@@ -8,22 +8,24 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.List;
 
-public class WeeklyMenuSheduler {
+//@Component
+public class WeeklyMenuScheduler {
 
     private final WeeklyMenuService weeklyMenuService;
     private final UserRepository userRepository;
 
-    public WeeklyMenuSheduler(WeeklyMenuService weeklyMenuService, UserRepository userRepository) {
+    public WeeklyMenuScheduler(WeeklyMenuService weeklyMenuService, UserRepository userRepository) {
         this.weeklyMenuService = weeklyMenuService;
         this.userRepository = userRepository;
     }
 
     @Scheduled(cron = "1 * * * * *")
-    public void autoGenerateAndSendByEmailWeeklyMenu(){
-        List<User> users = userRepository.findAllByAutoEmailEnabled(true);
+    public void autoGenerateAndSendByEmailWeeklyMenu() {
+        System.out.println("********* autoGenerateAndSendByEmailWeeklyMenu START");
+        List<User> users = userRepository.findAllByIsAutoEmailEnabled(true);
         for (User user : users) {
             WeeklyMenuResponse weeklyMenu = weeklyMenuService.autoGenerateWeeklyMenuForUser(user.getId());
-            weeklyMenuService.sendWeeklyMenuByEmail(weeklyMenu.id());
+            weeklyMenuService.sendWeeklyMenuByEmail(weeklyMenu.id(), user);
         }
     }
 }

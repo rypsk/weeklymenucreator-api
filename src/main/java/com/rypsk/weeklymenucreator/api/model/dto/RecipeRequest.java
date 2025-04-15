@@ -14,5 +14,6 @@ public record RecipeRequest(
         Difficulty difficulty,
         List<Season> season,
         DishType dishType,
-        DietType dietType ) {
+        DietType dietType,
+        boolean isPublic) {
 }

@@ -24,7 +24,8 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    private boolean autoEmailEnabled;
+    @Column(name = "is_auto_email_enabled")
+    private boolean isAutoEmailEnabled;
 
     private boolean isEnabled;
     private boolean isAccountNonExpired;

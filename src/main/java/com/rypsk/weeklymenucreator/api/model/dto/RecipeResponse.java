@@ -12,6 +12,8 @@ public record RecipeResponse(
         String description,
         List<Ingredient> ingredients,
         Difficulty difficulty,
-        List<Season> season
+        List<Season> season,
+        boolean isPublic,
+        String createdBy
 ) {
 }

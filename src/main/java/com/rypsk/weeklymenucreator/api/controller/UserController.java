@@ -108,6 +108,16 @@ public class UserController {
         return ResponseEntity.ok(Collections.singletonList(userService.createRecipeForUser(request, userId)));
     }
 
+    @GetMapping("me/recipes/available")
+    public ResponseEntity<List<RecipeResponse>> getAvailableRecipesForUser() {
+        return ResponseEntity.ok(userService.getAvailableRecipesForMe());
+    }
+
+    @GetMapping("{id}/recipes/available")
+    public ResponseEntity<List<RecipeResponse>> getAvailableRecipesForUser(@PathVariable(ID) @Min(1) Long userId) {
+        return ResponseEntity.ok(userService.getAvailableRecipesForUser(userId));
+    }
+
     @GetMapping("/me/recipes")
     public ResponseEntity<List<RecipeResponse>> getRecipesForMe() {
         return ResponseEntity.ok(userService.getRecipesForMe());

@@ -7,10 +7,7 @@ import com.rypsk.weeklymenucreator.api.model.dto.Attachment;
 import com.rypsk.weeklymenucreator.api.model.dto.AutoGenerateWeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuResponse;
-import com.rypsk.weeklymenucreator.api.model.entity.DailyMenu;
-import com.rypsk.weeklymenucreator.api.model.entity.Dish;
-import com.rypsk.weeklymenucreator.api.model.entity.User;
-import com.rypsk.weeklymenucreator.api.model.entity.WeeklyMenu;
+import com.rypsk.weeklymenucreator.api.model.entity.*;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DayOfWeek;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DietType;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DishType;
@@ -121,11 +118,11 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
         LocalDate startDate = request.startDate();
         LocalDate endDate = request.endDate();
         DietType dietType = request.dietType();
-        int weekMenuDays = startDate.until(endDate).getDays()+1;
+        int weekMenuDays = startDate.until(endDate).getDays() + 1;
         Set<DishType> dishTypes = request.dishTypes();
 
         WeeklyMenu weeklyMenu = new WeeklyMenu();
-        List<DailyMenu> dailyMenus= new ArrayList<>();
+        List<DailyMenu> dailyMenus = new ArrayList<>();
 
         for (int i = 0; i < weekMenuDays; i++) {
             DailyMenu dailyMenu = new DailyMenu();
@@ -162,29 +159,29 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
 
     private List<Dish> getDishes(Long userId, Set<DishType> dishTypes, DietType dietType) {
         List<Dish> dishes = new ArrayList<>();
-        if(dishTypes.contains(DishType.BREAKFAST)){
+        if (dishTypes.contains(DishType.BREAKFAST)) {
             Dish breakfastDish;
-            if(dietType != null){
+            if (dietType != null) {
                 breakfastDish = getDishByDietTypeAndDishType(DishType.BREAKFAST, dietType, userId);
-            }else{
+            } else {
                 breakfastDish = getDishByDishType(DishType.BREAKFAST, userId);
             }
             dishes.add(breakfastDish);
         }
         Dish lunchDish;
-        if(dishTypes.contains(DishType.LUNCH)){
-            if(dietType != null){
+        if (dishTypes.contains(DishType.LUNCH)) {
+            if (dietType != null) {
                 lunchDish = getDishByDietTypeAndDishType(DishType.LUNCH, dietType, userId);
-            }else{
+            } else {
                 lunchDish = getDishByDishType(DishType.LUNCH, userId);
             }
             dishes.add(lunchDish);
         }
         Dish dinnerDish;
-        if(dishTypes.contains(DishType.DINNER)){
-            if(dietType != null){
+        if (dishTypes.contains(DishType.DINNER)) {
+            if (dietType != null) {
                 dinnerDish = getDishByDietTypeAndDishType(DishType.DINNER, dietType, userId);
-            }else{
+            } else {
                 dinnerDish = getDishByDishType(DishType.DINNER, userId);
             }
             dishes.add(dinnerDish);
@@ -200,7 +197,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
         return availableDishes.get(new Random().nextInt(availableDishes.size()));
     }
 
-    private Dish getDishByDishType(DishType dishType, Long userId){
+    private Dish getDishByDishType(DishType dishType, Long userId) {
         List<Dish> availableDishes = dishService.getDishesByDishType(dishType, userId);
         if (availableDishes.isEmpty()) {
             throw new IllegalStateException("No dishes found for " + dishType + " for user " + userId);
@@ -227,6 +224,10 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
             case "excel", "xlsx" -> {
                 content = exportToExcel(weeklyMenu);
                 mediaType = MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            }
+            case "json" -> {
+                content = exportToPdf(weeklyMenu);
+                mediaType = MediaType.APPLICATION_JSON;
             }
             default -> throw new IllegalArgumentException("Unsupported format: " + format);
         }
@@ -296,9 +297,15 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
         return null;
     }
 
+    private byte[] exportToJson(WeeklyMenu weeklyMenu) {
+        return null;
+    }
+
     @Override
-    public void sendWeeklyMenuByEmail(Long id) {
-        User user = getCurrentUser();
+    public void sendWeeklyMenuByEmail(Long id, User user) {
+        if (user == null) {
+            user = getCurrentUser();
+        }
         WeeklyMenu weeklyMenu = weeklyMenuRepository.findById(id).orElseThrow(() -> new RuntimeException("Weekly menu not found."));
         if (!weeklyMenu.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You cannot send by email this weeklyMenu.");
@@ -308,7 +315,9 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
         Attachment attachment = new Attachment("weekly-menu-" + weeklyMenu.getId() + ".pdf", "application/pdf", pdfBytes);
 
         String subject = "Your Weekly Menu (ID: " + weeklyMenu.getId() + ")";
-        String body = "Here is your weekly menu as requested.";
+        String body = "Here is your weekly menu as requested.\n\n";
+        body += generateShoppingList(weeklyMenu);
+
 
         try {
             emailService.sendEmail(user.getUsername(), subject, body, List.of(attachment));
@@ -316,6 +325,31 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
             throw new RuntimeException(e);
         }
 
+    }
+
+    private String generateShoppingList(WeeklyMenu weeklyMenu) {
+        Map<String, String> ingredientMap = new LinkedHashMap<>();
+
+        for (DailyMenu dailyMenu : weeklyMenu.getDailyMenus()) {
+            for (Dish dish : dailyMenu.getDishes()) {
+                for (Ingredient ingredient : dish.getRecipe().getIngredients()) {
+                    ingredientMap.putIfAbsent(
+                            ingredient.getName(),
+                            ""
+                    );
+
+//                    ingredientMap.merge(
+//                            ingredient.getName(),
+//                            ingredient.getQuantity(),
+//                            (existing, added) -> existing + " + " + added
+//                    );
+                }
+            }
+        }
+
+        StringBuilder sb = new StringBuilder("Shopping List:\n\n");
+        ingredientMap.forEach((name, qty) -> sb.append("- ").append(name).append(" ").append(qty).append("\n"));
+        return sb.toString();
     }
 
     private WeeklyMenuResponse mapToResponse(WeeklyMenu weeklyMenu) {
@@ -327,7 +361,6 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
                 weeklyMenu.getDailyMenus()
         );
     }
-
 
 
 }

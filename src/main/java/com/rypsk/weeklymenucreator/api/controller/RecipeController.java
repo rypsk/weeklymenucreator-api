@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/recipes")
 public class RecipeController {
@@ -19,19 +21,24 @@ public class RecipeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RecipeResponse> getRecipe(@PathVariable @Min(1) Long id){
+    public ResponseEntity<RecipeResponse> getRecipe(@PathVariable @Min(1) Long id) {
         return ResponseEntity.ok(recipeService.getRecipe(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable @Min(1) Long id, @RequestBody RecipeRequest request){
+    public ResponseEntity<RecipeResponse> updateRecipe(@PathVariable @Min(1) Long id, @RequestBody RecipeRequest request) {
         return ResponseEntity.ok(recipeService.updateRecipe(id, request));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteRecipe(@PathVariable @Min(1) Long id){
+    public ResponseEntity<Void> deleteRecipe(@PathVariable @Min(1) Long id) {
         recipeService.deleteRecipe(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/public")
+    public ResponseEntity<List<RecipeResponse>> getPublicRecipes() {
+        return ResponseEntity.ok(recipeService.getPublicRecipes());
     }
 
 }

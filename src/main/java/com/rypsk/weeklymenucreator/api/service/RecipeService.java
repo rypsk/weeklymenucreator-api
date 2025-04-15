@@ -16,4 +16,8 @@ public interface RecipeService {
     RecipeResponse createRecipeForUser(RecipeRequest request, Long userId);
 
     List<RecipeResponse> getRecipesForUser(Long userId);
+
+    List<RecipeResponse> getAvailableRecipesForUser(Long userId);
+
+    List<RecipeResponse> getPublicRecipes();
 }

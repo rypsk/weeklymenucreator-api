@@ -33,7 +33,7 @@ public class UserServiceImpl implements UserService {
         this.recipeService = recipeService;
         this.ingredientService = ingredientService;
     }
-    
+
     private User getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -139,6 +139,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<RecipeResponse> getAvailableRecipesForMe() {
+        Long userId = getCurrentUser().getId();
+        return recipeService.getAvailableRecipesForUser(userId);
+    }
+
+    @Override
+    public List<RecipeResponse> getAvailableRecipesForUser(Long userId) {
+        return recipeService.getAvailableRecipesForUser(userId);
+    }
+
+    @Override
     public IngredientResponse createIngredientForMe(IngredientRequest request) {
         Long userId = getCurrentUser().getId();
         return ingredientService.createIngredientForUser(request, userId);
@@ -159,5 +170,6 @@ public class UserServiceImpl implements UserService {
     public List<IngredientResponse> getIngredientsForUser(Long userId) {
         return ingredientService.getIngredientesForUser(userId);
     }
+
 
 }

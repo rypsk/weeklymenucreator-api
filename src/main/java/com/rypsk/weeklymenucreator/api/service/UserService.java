@@ -43,6 +43,10 @@ public interface UserService {
 
     List<RecipeResponse> getRecipesForUser(@Min(1) Long userId);
 
+    List<RecipeResponse> getAvailableRecipesForMe();
+
+    List<RecipeResponse> getAvailableRecipesForUser(@Min(1) Long userId);
+
     IngredientResponse createIngredientForMe(IngredientRequest request);
 
     IngredientResponse createIngredientForUser(IngredientRequest request, @Min(1) Long userId);
@@ -50,5 +54,6 @@ public interface UserService {
     List<IngredientResponse> getIngredientsForMe();
 
     List<IngredientResponse> getIngredientsForUser(@Min(1) Long userId);
+
 
 }

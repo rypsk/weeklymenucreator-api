@@ -13,7 +13,7 @@ public class Ingredient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    private String quantity;
+    private String quantity;//TODO quantity to <int, string> --> <1, cup> or <200, gr>
 
     @ManyToOne
     @JoinColumn(name = "recipe_id")

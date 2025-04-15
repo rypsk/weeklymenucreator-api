@@ -16,7 +16,7 @@ import java.util.List;
 
 @Service
 public class RecipeServiceImpl implements RecipeService {
-    
+
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
 
@@ -88,14 +88,33 @@ public class RecipeServiceImpl implements RecipeService {
                 .toList();
     }
 
-    private RecipeResponse mapToResponse(Recipe recipe){
+    @Override
+    public List<RecipeResponse> getAvailableRecipesForUser(Long userId) {
+        userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found."));
+        return recipeRepository.findAvailableForUser(userId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public List<RecipeResponse> getPublicRecipes() {
+        return recipeRepository.findAllByIsPublic(true)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private RecipeResponse mapToResponse(Recipe recipe) {
         return new RecipeResponse(
                 recipe.getId(),
                 recipe.getName(),
                 recipe.getDescription(),
                 recipe.getIngredients(),
                 recipe.getDifficulty(),
-                recipe.getSeasons()
+                recipe.getSeasons(),
+                recipe.isPublic(),
+                recipe.getUser().getUsername()
         );
     }
 }
