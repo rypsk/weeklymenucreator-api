@@ -2,21 +2,26 @@ package com.rypsk.weeklymenucreator.api.model.dto;
 
 import com.rypsk.weeklymenucreator.api.model.entity.Recipe;
 import com.rypsk.weeklymenucreator.api.model.enumeration.FoodType;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-/**
- * DTO for Dish requests, used for creating, updating, and managing Dish entities.
- *
- * @param name        The name of the dish.
- * @param description The description of the dish.
- * @param recipe   The recipe associated with the dish.
- * @param foodType    The food type of the dish (e.g., VEGAN, VEGETARIAN, NON_VEGETARIAN).
- * @param userId      The ID of the user associated with the dish.
- */
 public record DishRequest(
+        @NotBlank(message = "Dish name is required")
+        @Size(max = 100, message = "Name can be at most 100 characters")
         String name,
+
+        @Size(max = 500, message = "Description can be at most 500 characters")
         String description,
-        Recipe recipe,
+
+        @NotNull(message = "Recipe is required")
+        @Valid Recipe recipe,
+
+        @NotNull(message = "Food type is required")
         FoodType foodType,
+
+        @NotNull(message = "User ID is required")
         Long userId
 ) {
 }

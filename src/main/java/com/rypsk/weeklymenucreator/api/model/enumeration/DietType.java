@@ -7,5 +7,7 @@ public enum DietType {
     MEAT,
     GLUTEN_FREE,
     PALEO,
-    KETO
+    KETO,
+    BALANCED,
+    ALL
 }

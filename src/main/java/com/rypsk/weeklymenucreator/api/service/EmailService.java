@@ -1,6 +1,6 @@
 package com.rypsk.weeklymenucreator.api.service;
 
-import com.rypsk.weeklymenucreator.api.model.dto.Attachment;
+import com.rypsk.weeklymenucreator.api.model.entity.Attachment;
 import jakarta.mail.MessagingException;
 
 import java.util.List;

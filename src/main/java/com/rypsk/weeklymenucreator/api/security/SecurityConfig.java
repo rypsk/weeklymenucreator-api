@@ -38,10 +38,11 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .headers(httpSecurityHeadersConfigurer -> httpSecurityHeadersConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(request ->{
+                .authorizeHttpRequests(request -> {
                     request.requestMatchers("/h2-console/**").permitAll();
                     request.requestMatchers(HttpMethod.POST, "/api/v1/auth/sign-up").permitAll();
                     request.requestMatchers(HttpMethod.POST, "/api/v1/auth/sign-in").permitAll();
+                    request.requestMatchers(HttpMethod.GET, "/api/v1/auth/verify").permitAll();
                     request.requestMatchers(
                             "/v3/api-docs/**",
                             "/swagger-ui/**",
@@ -60,7 +61,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(request ->{
+                .authorizeHttpRequests(request -> {
                     request.requestMatchers(HttpMethod.POST, "/auth/**").permitAll();
                     request.requestMatchers(HttpMethod.GET, "/auth/hello").permitAll();
                     request.requestMatchers(HttpMethod.GET, "/auth/secured").hasRole("ADMIN");

@@ -1,9 +1,11 @@
 -- USERS
-INSERT INTO USERS (username, password, is_auto_email_enabled, is_enabled, is_account_non_expired, is_account_non_locked,
-                   is_credentials_non_expired, role)
-VALUES ('rypsk@hotmail.com', '$2a$10$iT63nNLQ8uJFbpvIegrdqeU67S5S4bmZBsFKBz16wfq5k1M0nHU0O', 1, 1, 1, 1, 1,
-        'ROLE_USER'),
-       ('a2', '$2a$10$iT63nNLQ8uJFbpvIegrdqeU67S5S4bmZBsFKBz16wfq5k1M0nHU0O', 0, 1, 1, 0, 0, 'ROLE_ADMIN');
+INSERT INTO USERS (username, password, email, is_auto_email_enabled, is_enabled, is_account_non_expired,
+                   is_account_non_locked,
+                   is_credentials_non_expired, role, verification_code)
+VALUES ('a1', '$2a$10$iT63nNLQ8uJFbpvIegrdqeU67S5S4bmZBsFKBz16wfq5k1M0nHU0O', 'rypsk1.0@gmail.com', 1, 1, 1, 1, 1,
+        'ROLE_USER', 'adfasdfa'),
+       ('a2', '$2a$10$iT63nNLQ8uJFbpvIegrdqeU67S5S4bmZBsFKBz16wfq5k1M0nHU0O', 'a2a2a2a2a2', 0, 1, 1, 0, 0,
+        'ROLE_ADMIN', 'asdffqw');
 
 -- RECIPES
 INSERT INTO recipe (id, name, description, difficulty, user_id, is_public)

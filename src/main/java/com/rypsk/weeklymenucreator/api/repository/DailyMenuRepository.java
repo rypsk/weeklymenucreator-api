@@ -9,4 +9,5 @@ import java.util.Collection;
 @Repository
 public interface DailyMenuRepository extends JpaRepository<DailyMenu, Long> {
     Collection<DailyMenu> findByUserId(Long userId);
+
 }

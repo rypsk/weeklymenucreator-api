@@ -5,6 +5,7 @@ import com.rypsk.weeklymenucreator.api.model.dto.DishResponse;
 import com.rypsk.weeklymenucreator.api.model.entity.Dish;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DietType;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DishType;
+import com.rypsk.weeklymenucreator.api.model.enumeration.FoodType;
 import jakarta.validation.constraints.Min;
 
 import java.util.List;
@@ -23,4 +24,8 @@ public interface DishService {
     List<Dish> getDishesByDietTypeAndDishType(DietType dietType, DishType dishType, Long userId);
 
     List<Dish> getDishesByDishType(DishType dishType, Long userId);
+
+    List<Dish> getDishesByDishTypeAndFoodType(DishType dishType, Long userId, FoodType foodType);
+
+    List<Dish> getDishesByDietTypeAndDishTypeAndFoodType(DietType dietType, DishType dishType, Long userId, FoodType foodType);
 }

@@ -6,6 +6,7 @@ import com.rypsk.weeklymenucreator.api.model.entity.Dish;
 import com.rypsk.weeklymenucreator.api.model.entity.User;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DietType;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DishType;
+import com.rypsk.weeklymenucreator.api.model.enumeration.FoodType;
 import com.rypsk.weeklymenucreator.api.repository.DishRepository;
 import com.rypsk.weeklymenucreator.api.repository.UserRepository;
 import com.rypsk.weeklymenucreator.api.service.DishService;
@@ -93,8 +94,18 @@ public class DishServiceImpl implements DishService {
     }
 
     @Override
+    public List<Dish> getDishesByDietTypeAndDishTypeAndFoodType(DietType dietType, DishType dishType, Long userId, FoodType foodType) {
+        return dishRepository.findByDietTypeAndDishTypeAndUserIdAndFoodType(dietType, dishType, userId, foodType);
+    }
+
+    @Override
     public List<Dish> getDishesByDietTypeAndDishType(DietType dietType, DishType dishType, Long userId) {
         return dishRepository.findByDietTypeAndDishTypeAndUserId(dietType, dishType, userId);
+    }
+
+    @Override
+    public List<Dish> getDishesByDishTypeAndFoodType(DishType dishType, Long userId, FoodType foodType) {
+        return dishRepository.findByDishTypeAndUserIdAndFoodType(dishType, userId, foodType);
     }
 
     @Override

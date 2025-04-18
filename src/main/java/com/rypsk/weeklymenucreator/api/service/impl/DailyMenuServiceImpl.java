@@ -3,8 +3,10 @@ package com.rypsk.weeklymenucreator.api.service.impl;
 import com.rypsk.weeklymenucreator.api.model.dto.DailyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.DailyMenuResponse;
 import com.rypsk.weeklymenucreator.api.model.entity.DailyMenu;
+import com.rypsk.weeklymenucreator.api.model.entity.Dish;
 import com.rypsk.weeklymenucreator.api.model.entity.User;
 import com.rypsk.weeklymenucreator.api.repository.DailyMenuRepository;
+import com.rypsk.weeklymenucreator.api.repository.DishRepository;
 import com.rypsk.weeklymenucreator.api.repository.UserRepository;
 import com.rypsk.weeklymenucreator.api.service.DailyMenuService;
 import jakarta.transaction.Transactional;
@@ -20,10 +22,12 @@ public class DailyMenuServiceImpl implements DailyMenuService {
 
     private final DailyMenuRepository dailyMenuRepository;
     private final UserRepository userRepository;
+    private final DishRepository dishRepository;
 
-    public DailyMenuServiceImpl(DailyMenuRepository dailyMenuRepository, UserRepository userRepository) {
+    public DailyMenuServiceImpl(DailyMenuRepository dailyMenuRepository, UserRepository userRepository, DishRepository dishRepository) {
         this.dailyMenuRepository = dailyMenuRepository;
         this.userRepository = userRepository;
+        this.dishRepository = dishRepository;
     }
 
     private User getCurrentUser() {
@@ -52,8 +56,9 @@ public class DailyMenuServiceImpl implements DailyMenuService {
         if (!dailyMenu.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You cannot modify this dailyMenu.");
         }
+        List<Dish> dishes = dishRepository.findAllById(request.dishIds());
         dailyMenu.setDayOfWeek(request.dayOfWeek());
-        dailyMenu.setDishes(request.dishIds());
+        dailyMenu.setDishes(dishes);
         DailyMenu updatedMenu = dailyMenuRepository.save(dailyMenu);
         return mapToResponse(updatedMenu);
     }
@@ -72,9 +77,10 @@ public class DailyMenuServiceImpl implements DailyMenuService {
     @Override
     public DailyMenuResponse createDailyMenuForUser(DailyMenuRequest request, Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        List<Dish> dishes = dishRepository.findAllById(request.dishIds());
         DailyMenu dailyMenu = new DailyMenu();
         dailyMenu.setDayOfWeek(request.dayOfWeek());
-        dailyMenu.setDishes(request.dishIds());
+        dailyMenu.setDishes(dishes);
         dailyMenu.setUser(user);
         DailyMenu savedMenu = dailyMenuRepository.save(dailyMenu);
         return mapToResponse(savedMenu);

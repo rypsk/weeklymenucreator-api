@@ -1,6 +1,6 @@
 package com.rypsk.weeklymenucreator.api.service.impl;
 
-import com.rypsk.weeklymenucreator.api.model.dto.Attachment;
+import com.rypsk.weeklymenucreator.api.model.entity.Attachment;
 import com.rypsk.weeklymenucreator.api.service.EmailService;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -10,6 +10,7 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -26,6 +27,9 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendEmail(String to, String subject, String body, List<Attachment> attachments) throws MessagingException {
+        if (attachments == null) {
+            attachments = Collections.emptyList();
+        }
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
 

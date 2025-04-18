@@ -1,9 +1,10 @@
 package com.rypsk.weeklymenucreator.api.service.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
-import com.rypsk.weeklymenucreator.api.model.dto.Attachment;
 import com.rypsk.weeklymenucreator.api.model.dto.AutoGenerateWeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuResponse;
@@ -11,12 +12,18 @@ import com.rypsk.weeklymenucreator.api.model.entity.*;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DayOfWeek;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DietType;
 import com.rypsk.weeklymenucreator.api.model.enumeration.DishType;
+import com.rypsk.weeklymenucreator.api.model.enumeration.FoodType;
+import com.rypsk.weeklymenucreator.api.repository.DailyMenuRepository;
 import com.rypsk.weeklymenucreator.api.repository.UserRepository;
 import com.rypsk.weeklymenucreator.api.repository.WeeklyMenuRepository;
 import com.rypsk.weeklymenucreator.api.service.DishService;
 import com.rypsk.weeklymenucreator.api.service.EmailService;
 import com.rypsk.weeklymenucreator.api.service.WeeklyMenuService;
 import jakarta.mail.MessagingException;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,7 +36,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,12 +50,14 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     private final UserRepository userRepository;
     private final DishService dishService;
     private final EmailService emailService;
+    private final DailyMenuRepository dailyMenuRepository;
 
-    public WeeklyMenuServiceImpl(WeeklyMenuRepository weeklyMenuRepository, UserRepository userRepository, DishServiceImpl dishService, EmailService emailService) {
+    public WeeklyMenuServiceImpl(WeeklyMenuRepository weeklyMenuRepository, UserRepository userRepository, DishServiceImpl dishService, EmailService emailService, DailyMenuRepository dailyMenuRepository) {
         this.weeklyMenuRepository = weeklyMenuRepository;
         this.userRepository = userRepository;
         this.dishService = dishService;
         this.emailService = emailService;
+        this.dailyMenuRepository = dailyMenuRepository;
     }
 
     private User getCurrentUser() {
@@ -67,15 +78,16 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
 
     @Override
     @Transactional
-    public WeeklyMenuResponse updateWeeklyMenu(Long id, WeeklyMenuRequest weeklyMenuRequest) {
+    public WeeklyMenuResponse updateWeeklyMenu(Long id, WeeklyMenuRequest request) {
         User user = getCurrentUser();
         WeeklyMenu weeklyMenu = weeklyMenuRepository.findById(id).orElseThrow(() -> new RuntimeException("Weekly menu not found."));
         if (!weeklyMenu.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You cannot modify this weeklyMenu.");
         }
-        weeklyMenu.setStartDate(weeklyMenuRequest.startDate());
-        weeklyMenu.setEndDate(weeklyMenuRequest.endDate());
-        weeklyMenu.setDailyMenus(weeklyMenuRequest.dailyMenus());
+        List<DailyMenu> dailyMenus = dailyMenuRepository.findAllById(request.dailyMenuIds());
+        weeklyMenu.setStartDate(request.startDate());
+        weeklyMenu.setEndDate(request.endDate());
+        weeklyMenu.setDailyMenus(dailyMenus);
 
         WeeklyMenu updatedMenu = weeklyMenuRepository.save(weeklyMenu);
         return mapToResponse(updatedMenu);
@@ -95,11 +107,12 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     @Transactional
     public WeeklyMenuResponse createWeeklyMenuForUser(WeeklyMenuRequest request, Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        List<DailyMenu> dailyMenus = dailyMenuRepository.findAllById(request.dailyMenuIds());
         WeeklyMenu weeklyMenu = new WeeklyMenu();
         weeklyMenu.setUser(user);
         weeklyMenu.setStartDate(request.startDate());
         weeklyMenu.setEndDate(request.endDate());
-        weeklyMenu.setDailyMenus(request.dailyMenus());
+        weeklyMenu.setDailyMenus(dailyMenus);
         WeeklyMenu saved = weeklyMenuRepository.save(weeklyMenu);
         return mapToResponse(saved);
     }
@@ -115,11 +128,40 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     @Override
     public WeeklyMenuResponse autoGenerateWeeklyMenuForUser(AutoGenerateWeeklyMenuRequest request, Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        boolean allowRepeat = request.allowRepeat();
+
         LocalDate startDate = request.startDate();
         LocalDate endDate = request.endDate();
+
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date must be before or equal to end date.");
+        }
         DietType dietType = request.dietType();
         int weekMenuDays = startDate.until(endDate).getDays() + 1;
+        int totalMeals = weekMenuDays * request.dishTypes().size();
+
+        if (request.preferences() != null) {
+            int requestedMeals = request.preferences().values().stream().mapToInt(Integer::intValue).sum();
+            if (requestedMeals > totalMeals) {
+                throw new IllegalArgumentException("The total number of preferred meals (" + requestedMeals +
+                        ") exceeds the number of available meals (" + totalMeals + ").");
+            }
+        }
         Set<DishType> dishTypes = request.dishTypes();
+
+        List<FoodType> foodPreferences = new ArrayList<>();
+        assert request.preferences() != null;
+        request.preferences().forEach((foodType, count) -> {
+            for (int i = 0; i < count; i++) {
+                foodPreferences.add(foodType);
+            }
+        });
+
+        while (foodPreferences.size() < weekMenuDays) {
+            foodPreferences.addAll(request.preferences().keySet());
+        }
+
+        Collections.shuffle(foodPreferences);
 
         WeeklyMenu weeklyMenu = new WeeklyMenu();
         List<DailyMenu> dailyMenus = new ArrayList<>();
@@ -129,7 +171,8 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
             LocalDate today = startDate.plusDays(i);
             dailyMenu.setDate(today);
             dailyMenu.setDayOfWeek(DayOfWeek.valueOf(today.getDayOfWeek().name()));
-            List<Dish> dishes = getDishes(userId, dishTypes, dietType);
+            FoodType foodType = foodPreferences.get(i);
+            List<Dish> dishes = getDishes(userId, dishTypes, dietType, foodType, allowRepeat);
             dailyMenu.setDishes(dishes);
             dailyMenus.add(dailyMenu);
             dailyMenu.setUser(user);
@@ -149,60 +192,88 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     public WeeklyMenuResponse autoGenerateWeeklyMenuForUser(Long userId) {
         LocalDate startDate = LocalDate.now().with(java.time.DayOfWeek.MONDAY);
         LocalDate endDate = startDate.plusDays(7);
+        boolean allowRepeat = true;
         Set<DishType> dishTypes = new HashSet<>();
         dishTypes.add(DishType.BREAKFAST);
         dishTypes.add(DishType.LUNCH);
         dishTypes.add(DishType.DINNER);
-        AutoGenerateWeeklyMenuRequest request = new AutoGenerateWeeklyMenuRequest(startDate, endDate, dishTypes, null, null);
+        AutoGenerateWeeklyMenuRequest request = new AutoGenerateWeeklyMenuRequest(startDate, endDate, dishTypes, null, null, allowRepeat);
         return autoGenerateWeeklyMenuForUser(request, userId);
     }
 
-    private List<Dish> getDishes(Long userId, Set<DishType> dishTypes, DietType dietType) {
+    private List<Dish> getDishes(Long userId, Set<DishType> dishTypes, DietType dietType, FoodType foodType, boolean allowRepeat) {
         List<Dish> dishes = new ArrayList<>();
-        if (dishTypes.contains(DishType.BREAKFAST)) {
-            Dish breakfastDish;
-            if (dietType != null) {
-                breakfastDish = getDishByDietTypeAndDishType(DishType.BREAKFAST, dietType, userId);
-            } else {
-                breakfastDish = getDishByDishType(DishType.BREAKFAST, userId);
+        Set<Long> usedDishIds = new HashSet<>();
+
+        for (DishType dishType : dishTypes) {
+            if (dishType == DishType.BREAKFAST || dishType == DishType.LUNCH || dishType == DishType.DINNER) {
+                Dish dish = getDishForType(dishType, userId, dietType, foodType, allowRepeat, usedDishIds);
+                if (dish != null) {
+                    dishes.add(dish);
+                    if (!allowRepeat) {
+                        usedDishIds.add(dish.getId());
+                    }
+                }
             }
-            dishes.add(breakfastDish);
         }
-        Dish lunchDish;
-        if (dishTypes.contains(DishType.LUNCH)) {
-            if (dietType != null) {
-                lunchDish = getDishByDietTypeAndDishType(DishType.LUNCH, dietType, userId);
-            } else {
-                lunchDish = getDishByDishType(DishType.LUNCH, userId);
-            }
-            dishes.add(lunchDish);
-        }
-        Dish dinnerDish;
-        if (dishTypes.contains(DishType.DINNER)) {
-            if (dietType != null) {
-                dinnerDish = getDishByDietTypeAndDishType(DishType.DINNER, dietType, userId);
-            } else {
-                dinnerDish = getDishByDishType(DishType.DINNER, userId);
-            }
-            dishes.add(dinnerDish);
-        }
+
         return dishes;
     }
 
-    private Dish getDishByDietTypeAndDishType(DishType dishType, DietType dietType, Long userId) {
+    private Dish getDishForType(DishType dishType, Long userId, DietType dietType, FoodType foodType, boolean allowRepeat, Set<Long> usedDishIds) {
+        if (dietType != null) {
+            return foodType != null
+                    ? getDishByDietTypeAndDishTypeAndFoodType(dishType, dietType, userId, foodType, allowRepeat, usedDishIds)
+                    : getDishByDietTypeAndDishType(dishType, dietType, userId, allowRepeat, usedDishIds);
+        } else {
+            return foodType != null
+                    ? getDishByDishTypeAndFoodType(dishType, userId, foodType, allowRepeat, usedDishIds)
+                    : getDishByDishType(dishType, userId, allowRepeat, usedDishIds);
+        }
+    }
+
+    private Dish getDishByDietTypeAndDishTypeAndFoodType(DishType dishType, DietType dietType, Long userId, FoodType foodType, boolean allowRepeat, Set<Long> usedDishIds) {
+        List<Dish> availableDishes = dishService.getDishesByDietTypeAndDishTypeAndFoodType(dietType, dishType, userId, foodType);
+        if (availableDishes.isEmpty()) {
+            throw new IllegalStateException("No dishes found for " + dishType + " and " + dietType + " for user " + userId);
+        }
+        return filterAndSelect(availableDishes, allowRepeat, usedDishIds, dishType, userId);
+    }
+
+    private Dish getDishByDietTypeAndDishType(DishType dishType, DietType dietType, Long userId, boolean allowRepeat, Set<Long> usedDishIds) {
         List<Dish> availableDishes = dishService.getDishesByDietTypeAndDishType(dietType, dishType, userId);
         if (availableDishes.isEmpty()) {
             throw new IllegalStateException("No dishes found for " + dishType + " and " + dietType + " for user " + userId);
         }
-        return availableDishes.get(new Random().nextInt(availableDishes.size()));
+        return filterAndSelect(availableDishes, allowRepeat, usedDishIds, dishType, userId);
     }
 
-    private Dish getDishByDishType(DishType dishType, Long userId) {
+    private Dish getDishByDishTypeAndFoodType(DishType dishType, Long userId, FoodType foodType, boolean allowRepeat, Set<Long> usedDishIds) {
+        List<Dish> availableDishes = dishService.getDishesByDishTypeAndFoodType(dishType, userId, foodType);
+        if (availableDishes.isEmpty()) {
+            throw new IllegalStateException("No dishes found for " + dishType + " for user " + userId);
+        }
+        return filterAndSelect(availableDishes, allowRepeat, usedDishIds, dishType, userId);
+    }
+
+    private Dish getDishByDishType(DishType dishType, Long userId, boolean allowRepeat, Set<Long> usedDishIds) {
         List<Dish> availableDishes = dishService.getDishesByDishType(dishType, userId);
         if (availableDishes.isEmpty()) {
             throw new IllegalStateException("No dishes found for " + dishType + " for user " + userId);
         }
-        return availableDishes.get(new Random().nextInt(availableDishes.size()));
+        return filterAndSelect(availableDishes, allowRepeat, usedDishIds, dishType, userId);
+    }
+
+    private Dish filterAndSelect(List<Dish> dishes, boolean allowRepeat, Set<Long> usedDishIds, DishType dishType, Long userId) {
+        List<Dish> filtered = allowRepeat
+                ? dishes
+                : dishes.stream().filter(d -> !usedDishIds.contains(d.getId())).toList();
+
+        if (filtered.isEmpty()) {
+            throw new IllegalStateException("No available dishes for " + dishType + " with current filters for user " + userId);
+        }
+
+        return filtered.get(new Random().nextInt(filtered.size()));
     }
 
     @Override
@@ -214,7 +285,11 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
         }
         byte[] content;
         MediaType mediaType;
-        String filename = "weekly-menu." + format.toLowerCase();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String start = weeklyMenu.getStartDate().format(formatter);
+        String end = weeklyMenu.getEndDate().format(formatter);
+        String filename = "weekly-menu_" + start + "_" + end + "." + format.toLowerCase();
 
         switch (format.toLowerCase()) {
             case "pdf" -> {
@@ -226,8 +301,12 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
                 mediaType = MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             }
             case "json" -> {
-                content = exportToPdf(weeklyMenu);
+                content = exportToJson(weeklyMenu);
                 mediaType = MediaType.APPLICATION_JSON;
+            }
+            case "csv" -> {
+                content = exportToCsv(weeklyMenu);
+                mediaType = MediaType.TEXT_PLAIN;
             }
             default -> throw new IllegalArgumentException("Unsupported format: " + format);
         }
@@ -294,11 +373,105 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     }
 
     private byte[] exportToExcel(WeeklyMenu weeklyMenu) {
-        return null;
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Weekly Menu");
+
+            Row headerRow = sheet.createRow(0);
+            headerRow.createCell(0).setCellValue("Dish Type");
+
+            List<DailyMenu> dailyMenus = weeklyMenu.getDailyMenus();
+            for (int i = 0; i < dailyMenus.size(); i++) {
+                headerRow.createCell(i + 1).setCellValue(dailyMenus.get(i).getDayOfWeek().toString());
+            }
+
+            Set<String> dishTypes = new HashSet<>();
+            for (DailyMenu dailyMenu : dailyMenus) {
+                for (Dish dish : dailyMenu.getDishes()) {
+                    dishTypes.add(dish.getDishType().name());
+                }
+            }
+
+            int rowIdx = 1;
+            for (String dishType : dishTypes) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(dishType);
+
+                for (int i = 0; i < dailyMenus.size(); i++) {
+                    DailyMenu dailyMenu = dailyMenus.get(i);
+                    Optional<Dish> matchingDish = dailyMenu.getDishes().stream()
+                            .filter(d -> d.getDishType().name().equals(dishType))
+                            .findFirst();
+
+                    if (matchingDish.isPresent()) {
+                        row.createCell(i + 1).setCellValue(matchingDish.get().getName());
+                    } else {
+                        row.createCell(i + 1).setCellValue("");
+                    }
+                }
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+
+        } catch (IOException e) {
+            throw new RuntimeException("Error generating Excel file", e);
+        }
     }
 
     private byte[] exportToJson(WeeklyMenu weeklyMenu) {
-        return null;
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.findAndRegisterModules();
+            return mapper.writeValueAsBytes(weeklyMenu);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error generating JSON", e);
+        }
+    }
+
+    private byte[] exportToCsv(WeeklyMenu weeklyMenu) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("WEEKLY MENU\n");
+        sb.append("Day,Date,Dish Type,Dish Name,Dish Description,Food Type\n");
+
+        for (DailyMenu dailyMenu : weeklyMenu.getDailyMenus()) {
+            for (Dish dish : dailyMenu.getDishes()) {
+                sb.append(dailyMenu.getDayOfWeek()).append(",");
+                sb.append(dailyMenu.getDate()).append(",");
+                sb.append(dish.getDishType()).append(",");
+                sb.append("\"").append(dish.getName()).append("\",");
+                sb.append("\"").append(dish.getDescription() != null ? dish.getDescription() : "").append("\",");
+                sb.append(dish.getFoodType()).append("\n");
+            }
+        }
+
+        sb.append("\nSHOPPING LIST\n");
+        sb.append("Ingredient,Quantity,Unit\n");
+
+        Map<String, List<Ingredient>> grouped = new HashMap<>();
+
+        for (DailyMenu dailyMenu : weeklyMenu.getDailyMenus()) {
+            for (Dish dish : dailyMenu.getDishes()) {
+                Recipe recipe = dish.getRecipe();
+                if (recipe != null && recipe.getIngredients() != null) {
+                    for (Ingredient ingredient : recipe.getIngredients()) {
+                        grouped.computeIfAbsent(ingredient.getName(), k -> new ArrayList<>()).add(ingredient);
+                    }
+                }
+            }
+        }
+
+        for (Map.Entry<String, List<Ingredient>> entry : grouped.entrySet()) {
+            String name = entry.getKey();
+            List<Ingredient> ingList = entry.getValue();
+            for (Ingredient ing : ingList) {
+                sb.append(name).append(",");
+                sb.append(ing.getQuantity()).append(",");
+                sb.append("unit\n"); // Puedes agregar `ing.getUnit()` si lo tienes como campo
+            }
+        }
+
+        return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
     @Override
@@ -320,7 +493,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
 
 
         try {
-            emailService.sendEmail(user.getUsername(), subject, body, List.of(attachment));
+            emailService.sendEmail(user.getEmail(), subject, body, List.of(attachment));
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }

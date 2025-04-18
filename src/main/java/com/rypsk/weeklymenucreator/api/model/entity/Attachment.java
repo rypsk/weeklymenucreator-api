@@ -1,4 +1,4 @@
-package com.rypsk.weeklymenucreator.api.model.dto;
+package com.rypsk.weeklymenucreator.api.model.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

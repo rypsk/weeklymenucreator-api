@@ -24,6 +24,9 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(unique = true, nullable = false)
+    private String email;
+
     @Column(name = "is_auto_email_enabled")
     private boolean isAutoEmailEnabled;
 
@@ -35,5 +38,7 @@ public class User {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    private String verificationCode;
 
 }
