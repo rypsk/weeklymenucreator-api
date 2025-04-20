@@ -10,8 +10,8 @@ import com.rypsk.weeklymenucreator.api.model.enumeration.FoodType;
 import com.rypsk.weeklymenucreator.api.repository.DishRepository;
 import com.rypsk.weeklymenucreator.api.repository.UserRepository;
 import com.rypsk.weeklymenucreator.api.service.DishService;
+import com.rypsk.weeklymenucreator.api.service.UserService;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -22,21 +22,17 @@ public class DishServiceImpl implements DishService {
 
     private final DishRepository dishRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
 
-    public DishServiceImpl(DishRepository dishRepository, UserRepository userRepository) {
+    public DishServiceImpl(DishRepository dishRepository, UserRepository userRepository, UserService userService) {
         this.dishRepository = dishRepository;
         this.userRepository = userRepository;
-    }
-
-    private User getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        this.userService = userService;
     }
 
     @Override
     public DishResponse getDish(Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Dish dish = dishRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dish not found."));
         if (!dish.getUser().getId().equals(user.getId())) {
@@ -47,7 +43,7 @@ public class DishServiceImpl implements DishService {
 
     @Override
     public DishResponse updateDish(Long id, DishRequest request) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Dish dish = dishRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dish not found."));
         if (!dish.getUser().getId().equals(user.getId())) {
@@ -62,7 +58,7 @@ public class DishServiceImpl implements DishService {
 
     @Override
     public void deleteDish(Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Dish dish = dishRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dish not found"));
         if (!dish.getUser().getId().equals(user.getId())) {
@@ -111,6 +107,28 @@ public class DishServiceImpl implements DishService {
     @Override
     public List<Dish> getDishesByDishType(DishType dishType, Long userId) {
         return dishRepository.findByDishTypeAndUserId(dishType, userId);
+    }
+
+    @Override
+    public DishResponse createDishForMe(DishRequest request) {
+        User user = userService.getCurrentUser();
+        Dish dish = new Dish();
+        dish.setName(request.name());
+        dish.setDescription(request.description());
+        dish.setRecipe(request.recipe());
+        dish.setFoodType(request.foodType());
+        dish.setUser(user);
+        Dish savedDish = dishRepository.save(dish);
+        return mapToResponse(savedDish);
+    }
+
+    @Override
+    public List<DishResponse> getDishesForMe() {
+        User user = userService.getCurrentUser();
+        return dishRepository.findByUserId(user.getId())
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     private DishResponse mapToResponse(Dish dish) {

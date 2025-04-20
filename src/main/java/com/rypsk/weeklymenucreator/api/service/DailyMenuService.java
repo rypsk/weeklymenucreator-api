@@ -14,7 +14,11 @@ public interface DailyMenuService {
 
     void deleteDailyMenu(@Min(1) Long id);
 
+    DailyMenuResponse createDailyMenuForMe(DailyMenuRequest request);
+
     DailyMenuResponse createDailyMenuForUser(DailyMenuRequest request, Long userId);
+
+    List<DailyMenuResponse> getDailyMenusForMe();
 
     List<DailyMenuResponse> getDailyMenusForUser(Long userId);
 }

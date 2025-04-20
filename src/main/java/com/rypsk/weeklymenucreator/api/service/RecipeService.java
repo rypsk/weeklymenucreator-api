@@ -13,9 +13,15 @@ public interface RecipeService {
 
     void deleteRecipe(@Min(1) Long id);
 
+    RecipeResponse createRecipeForMe(RecipeRequest request);
+
     RecipeResponse createRecipeForUser(RecipeRequest request, Long userId);
 
+    List<RecipeResponse> getRecipesForMe();
+
     List<RecipeResponse> getRecipesForUser(Long userId);
+
+    List<RecipeResponse> getAvailableRecipesForMe();
 
     List<RecipeResponse> getAvailableRecipesForUser(Long userId);
 

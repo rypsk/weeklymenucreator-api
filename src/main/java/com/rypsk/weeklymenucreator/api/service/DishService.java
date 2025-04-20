@@ -17,7 +17,11 @@ public interface DishService {
 
     void deleteDish(@Min(1) Long id);
 
+    DishResponse createDishForMe(DishRequest request);
+
     DishResponse createDishForUser(DishRequest request, Long userId);
+
+    List<DishResponse> getDishesForMe();
 
     List<DishResponse> getDishesForUser(Long userId);
 

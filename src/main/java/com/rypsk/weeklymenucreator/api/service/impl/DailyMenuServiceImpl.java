@@ -9,10 +9,9 @@ import com.rypsk.weeklymenucreator.api.repository.DailyMenuRepository;
 import com.rypsk.weeklymenucreator.api.repository.DishRepository;
 import com.rypsk.weeklymenucreator.api.repository.UserRepository;
 import com.rypsk.weeklymenucreator.api.service.DailyMenuService;
+import com.rypsk.weeklymenucreator.api.service.UserService;
 import jakarta.transaction.Transactional;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,22 +22,18 @@ public class DailyMenuServiceImpl implements DailyMenuService {
     private final DailyMenuRepository dailyMenuRepository;
     private final UserRepository userRepository;
     private final DishRepository dishRepository;
+    private final UserService userService;
 
-    public DailyMenuServiceImpl(DailyMenuRepository dailyMenuRepository, UserRepository userRepository, DishRepository dishRepository) {
+    public DailyMenuServiceImpl(DailyMenuRepository dailyMenuRepository, UserRepository userRepository, DishRepository dishRepository, UserService userService) {
         this.dailyMenuRepository = dailyMenuRepository;
         this.userRepository = userRepository;
         this.dishRepository = dishRepository;
-    }
-
-    private User getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        this.userService = userService;
     }
 
     @Override
     public DailyMenuResponse getDailyMenu(Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         DailyMenu dailyMenu = dailyMenuRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Daily menu not found"));
         if (!dailyMenu.getUser().getId().equals(user.getId())) {
@@ -50,7 +45,7 @@ public class DailyMenuServiceImpl implements DailyMenuService {
     @Override
     @Transactional
     public DailyMenuResponse updateDailyMenu(Long id, DailyMenuRequest request) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         DailyMenu dailyMenu = dailyMenuRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Daily menu not found"));
         if (!dailyMenu.getUser().getId().equals(user.getId())) {
@@ -65,7 +60,7 @@ public class DailyMenuServiceImpl implements DailyMenuService {
 
     @Override
     public void deleteDailyMenu(Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         DailyMenu dailyMenu = dailyMenuRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dish not found"));
         if (!dailyMenu.getUser().getId().equals(user.getId())) {
@@ -90,6 +85,26 @@ public class DailyMenuServiceImpl implements DailyMenuService {
     public List<DailyMenuResponse> getDailyMenusForUser(Long userId) {
         userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         return dailyMenuRepository.findByUserId(userId).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public DailyMenuResponse createDailyMenuForMe(DailyMenuRequest request) {
+        User user = userService.getCurrentUser();
+        List<Dish> dishes = dishRepository.findAllById(request.dishIds());
+        DailyMenu dailyMenu = new DailyMenu();
+        dailyMenu.setDayOfWeek(request.dayOfWeek());
+        dailyMenu.setDishes(dishes);
+        dailyMenu.setUser(user);
+        DailyMenu savedMenu = dailyMenuRepository.save(dailyMenu);
+        return mapToResponse(savedMenu);
+    }
+
+    @Override
+    public List<DailyMenuResponse> getDailyMenusForMe() {
+        User user = userService.getCurrentUser();
+        return dailyMenuRepository.findByUserId(user.getId()).stream()
                 .map(this::mapToResponse)
                 .toList();
     }

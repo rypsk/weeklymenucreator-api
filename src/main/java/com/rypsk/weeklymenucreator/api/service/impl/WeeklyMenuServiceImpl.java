@@ -18,6 +18,7 @@ import com.rypsk.weeklymenucreator.api.repository.UserRepository;
 import com.rypsk.weeklymenucreator.api.repository.WeeklyMenuRepository;
 import com.rypsk.weeklymenucreator.api.service.DishService;
 import com.rypsk.weeklymenucreator.api.service.EmailService;
+import com.rypsk.weeklymenucreator.api.service.UserService;
 import com.rypsk.weeklymenucreator.api.service.WeeklyMenuService;
 import jakarta.mail.MessagingException;
 import org.apache.poi.ss.usermodel.Row;
@@ -29,8 +30,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,24 +50,20 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     private final DishService dishService;
     private final EmailService emailService;
     private final DailyMenuRepository dailyMenuRepository;
+    private final UserService userService;
 
-    public WeeklyMenuServiceImpl(WeeklyMenuRepository weeklyMenuRepository, UserRepository userRepository, DishServiceImpl dishService, EmailService emailService, DailyMenuRepository dailyMenuRepository) {
+    public WeeklyMenuServiceImpl(WeeklyMenuRepository weeklyMenuRepository, UserRepository userRepository, DishServiceImpl dishService, EmailService emailService, DailyMenuRepository dailyMenuRepository, UserService userService) {
         this.weeklyMenuRepository = weeklyMenuRepository;
         this.userRepository = userRepository;
         this.dishService = dishService;
         this.emailService = emailService;
         this.dailyMenuRepository = dailyMenuRepository;
-    }
-
-    private User getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        this.userService = userService;
     }
 
     @Override
     public WeeklyMenuResponse getWeeklyMenu(Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         WeeklyMenu weeklyMenu = weeklyMenuRepository.findById(id).orElseThrow(() -> new RuntimeException("Weekly menu not found."));
         if (!weeklyMenu.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You cannot get this weeklyMenu.");
@@ -79,7 +74,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     @Override
     @Transactional
     public WeeklyMenuResponse updateWeeklyMenu(Long id, WeeklyMenuRequest request) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         WeeklyMenu weeklyMenu = weeklyMenuRepository.findById(id).orElseThrow(() -> new RuntimeException("Weekly menu not found."));
         if (!weeklyMenu.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You cannot modify this weeklyMenu.");
@@ -95,7 +90,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
 
     @Override
     public void deleteWeeklyMenu(Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         WeeklyMenu weeklyMenu = weeklyMenuRepository.findById(id).orElseThrow(() -> new RuntimeException("Dish not found"));
         if (!weeklyMenu.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You cannot delete this weeklyMenu.");
@@ -123,6 +118,24 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
         return weeklyMenus.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public WeeklyMenuResponse createWeeklyMenuForMe(WeeklyMenuRequest request) {
+        User user = userService.getCurrentUser();
+        return createWeeklyMenuForUser(request, user.getId());
+    }
+
+    @Override
+    public List<WeeklyMenuResponse> getWeeklyMenusForMe() {
+        User user = userService.getCurrentUser();
+        return getWeeklyMenusForUser(user.getId());
+    }
+
+    @Override
+    public WeeklyMenuResponse autoGenerateWeeklyMenuForMe(AutoGenerateWeeklyMenuRequest request) {
+        User user = userService.getCurrentUser();
+        return autoGenerateWeeklyMenuForUser(request, user.getId());
     }
 
     @Override
@@ -278,7 +291,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
 
     @Override
     public ResponseEntity<byte[]> exportWeeklyMenu(Long id, String format) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         WeeklyMenu weeklyMenu = weeklyMenuRepository.findById(id).orElseThrow(() -> new RuntimeException("Weekly menu not found."));
         if (!weeklyMenu.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("You cannot export this weeklyMenu.");
@@ -477,7 +490,7 @@ public class WeeklyMenuServiceImpl implements WeeklyMenuService {
     @Override
     public void sendWeeklyMenuByEmail(Long id, User user) {
         if (user == null) {
-            user = getCurrentUser();
+            user = userService.getCurrentUser();
         }
         WeeklyMenu weeklyMenu = weeklyMenuRepository.findById(id).orElseThrow(() -> new RuntimeException("Weekly menu not found."));
         if (!weeklyMenu.getUser().getId().equals(user.getId())) {

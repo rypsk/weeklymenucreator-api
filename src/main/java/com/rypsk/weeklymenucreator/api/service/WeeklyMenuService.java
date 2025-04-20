@@ -16,9 +16,15 @@ public interface WeeklyMenuService {
 
     void deleteWeeklyMenu(Long id);
 
+    WeeklyMenuResponse createWeeklyMenuForMe(WeeklyMenuRequest request);
+
     WeeklyMenuResponse createWeeklyMenuForUser(WeeklyMenuRequest request, Long userId);
 
+    List<WeeklyMenuResponse> getWeeklyMenusForMe();
+
     List<WeeklyMenuResponse> getWeeklyMenusForUser(Long userId);
+
+    WeeklyMenuResponse autoGenerateWeeklyMenuForMe(AutoGenerateWeeklyMenuRequest request);
 
     WeeklyMenuResponse autoGenerateWeeklyMenuForUser(AutoGenerateWeeklyMenuRequest request, Long userId);
 

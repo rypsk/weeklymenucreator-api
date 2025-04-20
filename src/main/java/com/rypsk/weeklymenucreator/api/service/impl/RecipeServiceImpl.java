@@ -7,9 +7,8 @@ import com.rypsk.weeklymenucreator.api.model.entity.User;
 import com.rypsk.weeklymenucreator.api.repository.RecipeRepository;
 import com.rypsk.weeklymenucreator.api.repository.UserRepository;
 import com.rypsk.weeklymenucreator.api.service.RecipeService;
+import com.rypsk.weeklymenucreator.api.service.UserService;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,21 +18,17 @@ public class RecipeServiceImpl implements RecipeService {
 
     private final RecipeRepository recipeRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
 
-    public RecipeServiceImpl(RecipeRepository recipeRepository, UserRepository userRepository) {
+    public RecipeServiceImpl(RecipeRepository recipeRepository, UserRepository userRepository, UserService userService) {
         this.recipeRepository = recipeRepository;
         this.userRepository = userRepository;
-    }
-
-    private User getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        this.userService = userService;
     }
 
     @Override
     public RecipeResponse getRecipe(Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dish not found."));
         if (!recipe.getUser().getId().equals(user.getId())) {
@@ -44,7 +39,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public RecipeResponse updateRecipe(Long id, RecipeRequest request) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dish not found."));
         if (!recipe.getUser().getId().equals(user.getId())) {
@@ -59,7 +54,7 @@ public class RecipeServiceImpl implements RecipeService {
 
     @Override
     public void deleteRecipe(Long id) {
-        User user = getCurrentUser();
+        User user = userService.getCurrentUser();
         Recipe recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Dish not found"));
         if (!recipe.getUser().getId().equals(user.getId())) {
@@ -92,6 +87,35 @@ public class RecipeServiceImpl implements RecipeService {
     public List<RecipeResponse> getAvailableRecipesForUser(Long userId) {
         userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found."));
         return recipeRepository.findAvailableForUser(userId)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public RecipeResponse createRecipeForMe(RecipeRequest request) {
+        User user = userService.getCurrentUser();
+        Recipe recipe = new Recipe();
+        recipe.setName(request.name());
+        recipe.setDescription(request.description());
+        recipe.setDifficulty(request.difficulty());
+        recipe.setIngredients(request.ingredients());
+        recipe.setUser(user);
+        return mapToResponse(recipeRepository.save(recipe));
+    }
+
+    @Override
+    public List<RecipeResponse> getRecipesForMe() {
+        User user = userService.getCurrentUser();
+        return recipeRepository.findByUserId(user.getId()).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public List<RecipeResponse> getAvailableRecipesForMe() {
+        User user = userService.getCurrentUser();
+        return recipeRepository.findAvailableForUser(user.getId())
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
