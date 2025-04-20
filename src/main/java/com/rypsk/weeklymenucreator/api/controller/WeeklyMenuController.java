@@ -3,6 +3,8 @@ package com.rypsk.weeklymenucreator.api.controller;
 import com.rypsk.weeklymenucreator.api.model.dto.AutoGenerateWeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuRequest;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuResponse;
+import com.rypsk.weeklymenucreator.api.service.EmailService;
+import com.rypsk.weeklymenucreator.api.service.ExportService;
 import com.rypsk.weeklymenucreator.api.service.WeeklyMenuService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,9 +24,13 @@ public class WeeklyMenuController {
     private static final String ID = "id";
 
     private final WeeklyMenuService weeklyMenuService;
+    private final ExportService exportService;
+    private final EmailService emailService;
 
-    public WeeklyMenuController(WeeklyMenuService weeklyMenuService) {
+    public WeeklyMenuController(WeeklyMenuService weeklyMenuService, ExportService exportService, EmailService emailService) {
         this.weeklyMenuService = weeklyMenuService;
+        this.exportService = exportService;
+        this.emailService = emailService;
     }
 
     @GetMapping("/{id}")
@@ -62,7 +68,7 @@ public class WeeklyMenuController {
             @PathVariable Long id,
             @Parameter(description = "Export format (e.g., pdf, xlsx)", required = true)
             @PathVariable String format) {
-        return weeklyMenuService.exportWeeklyMenu(id, format);
+        return exportService.exportWeeklyMenu(id, format);
     }
 
     @PostMapping("/{id}/email")
@@ -71,11 +77,11 @@ public class WeeklyMenuController {
     public ResponseEntity<String> sendWeeklyMenuByEmail(
             @Parameter(description = "Weekly menu ID", required = true)
             @PathVariable Long id) {
-        weeklyMenuService.sendWeeklyMenuByEmail(id, null);
+        emailService.sendWeeklyMenuByEmail(id, null);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/me/auto-generate")
+    @PostMapping("/users/me/auto-generate")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Auto-generate a weekly menu", description = "Automatically generates a weekly menu for the current user based on preferences")
     public ResponseEntity<WeeklyMenuResponse> autoGenerateWeeklyMenu(
@@ -85,7 +91,7 @@ public class WeeklyMenuController {
         return ResponseEntity.status(HttpStatus.CREATED).body(generatedMenu);
     }
 
-    @PostMapping("/me")
+    @PostMapping("/users/me")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a weekly menu for current user", description = "Creates a new weekly menu for the current user and returns it")
     public ResponseEntity<WeeklyMenuResponse> createWeeklyMenuForMe(
@@ -105,7 +111,7 @@ public class WeeklyMenuController {
         return ResponseEntity.ok(weeklyMenuService.createWeeklyMenuForUser(request, userId));
     }
 
-    @GetMapping("/me")
+    @GetMapping("/users/me")
     @Operation(summary = "Get weekly menus for current user", description = "Returns all weekly menus for the current user")
     public ResponseEntity<List<WeeklyMenuResponse>> getWeeklyMenusForMe() {
         return ResponseEntity.ok(weeklyMenuService.getWeeklyMenusForMe());

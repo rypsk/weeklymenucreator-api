@@ -112,23 +112,13 @@ public class DishServiceImpl implements DishService {
     @Override
     public DishResponse createDishForMe(DishRequest request) {
         User user = userService.getCurrentUser();
-        Dish dish = new Dish();
-        dish.setName(request.name());
-        dish.setDescription(request.description());
-        dish.setRecipe(request.recipe());
-        dish.setFoodType(request.foodType());
-        dish.setUser(user);
-        Dish savedDish = dishRepository.save(dish);
-        return mapToResponse(savedDish);
+        return createDishForUser(request, user.getId());
     }
 
     @Override
     public List<DishResponse> getDishesForMe() {
         User user = userService.getCurrentUser();
-        return dishRepository.findByUserId(user.getId())
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        return getDishesForUser(user.getId());
     }
 
     private DishResponse mapToResponse(Dish dish) {

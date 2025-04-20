@@ -85,21 +85,13 @@ public class IngredientServiceImpl implements IngredientService {
     @Override
     public IngredientResponse createIngredientForMe(IngredientRequest request) {
         User user = userService.getCurrentUser();
-        Ingredient ingredient = new Ingredient();
-        ingredient.setName(request.name());
-        ingredient.setQuantity(request.quantity());
-        ingredient.setUser(user);
-        Ingredient savedIngredient = ingredientRepository.save(ingredient);
-        return mapToResponse(savedIngredient);
+        return createIngredientForUser(request, user.getId());
     }
 
     @Override
     public List<IngredientResponse> getIngredientsForMe() {
         User user = userService.getCurrentUser();
-        Collection<Ingredient> ingredients = ingredientRepository.findByUserId(user.getId());
-        return ingredients.stream()
-                .map(this::mapToResponse)
-                .toList();
+        return getIngredientsForUser(user.getId());
     }
 
     private IngredientResponse mapToResponse(Ingredient ingredient) {

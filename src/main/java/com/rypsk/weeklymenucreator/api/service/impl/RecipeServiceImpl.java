@@ -95,30 +95,19 @@ public class RecipeServiceImpl implements RecipeService {
     @Override
     public RecipeResponse createRecipeForMe(RecipeRequest request) {
         User user = userService.getCurrentUser();
-        Recipe recipe = new Recipe();
-        recipe.setName(request.name());
-        recipe.setDescription(request.description());
-        recipe.setDifficulty(request.difficulty());
-        recipe.setIngredients(request.ingredients());
-        recipe.setUser(user);
-        return mapToResponse(recipeRepository.save(recipe));
+        return createRecipeForUser(request, user.getId());
     }
 
     @Override
     public List<RecipeResponse> getRecipesForMe() {
         User user = userService.getCurrentUser();
-        return recipeRepository.findByUserId(user.getId()).stream()
-                .map(this::mapToResponse)
-                .toList();
+        return getRecipesForUser(user.getId());
     }
 
     @Override
     public List<RecipeResponse> getAvailableRecipesForMe() {
         User user = userService.getCurrentUser();
-        return recipeRepository.findAvailableForUser(user.getId())
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        return getAvailableRecipesForUser(user.getId());
     }
 
     @Override

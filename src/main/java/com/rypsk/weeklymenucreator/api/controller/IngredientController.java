@@ -52,7 +52,7 @@ public class IngredientController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/me")
+    @PostMapping("/users/me")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create an ingredient for current user", description = "Creates a new ingredient for the current user and returns it")
     public ResponseEntity<IngredientResponse> createIngredientForMe(
@@ -72,7 +72,7 @@ public class IngredientController {
         return ResponseEntity.ok(ingredientService.createIngredientForUser(request, userId));
     }
 
-    @GetMapping("/me")
+    @GetMapping("/users/me")
     @Operation(summary = "Get ingredients for current user", description = "Returns all ingredients for the current user")
     public ResponseEntity<List<IngredientResponse>> getIngredientsForMe() {
         return ResponseEntity.ok(ingredientService.getIngredientsForMe());
