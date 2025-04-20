@@ -3,6 +3,7 @@ package com.rypsk.weeklymenucreator.api.sheduler;
 import com.rypsk.weeklymenucreator.api.model.dto.WeeklyMenuResponse;
 import com.rypsk.weeklymenucreator.api.model.entity.User;
 import com.rypsk.weeklymenucreator.api.repository.UserRepository;
+import com.rypsk.weeklymenucreator.api.service.EmailService;
 import com.rypsk.weeklymenucreator.api.service.WeeklyMenuService;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -13,10 +14,12 @@ public class WeeklyMenuScheduler {
 
     private final WeeklyMenuService weeklyMenuService;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
-    public WeeklyMenuScheduler(WeeklyMenuService weeklyMenuService, UserRepository userRepository) {
+    public WeeklyMenuScheduler(WeeklyMenuService weeklyMenuService, UserRepository userRepository, EmailService emailService) {
         this.weeklyMenuService = weeklyMenuService;
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     @Scheduled(cron = "1 * * * * *")
@@ -25,7 +28,7 @@ public class WeeklyMenuScheduler {
         List<User> users = userRepository.findAllByIsAutoEmailEnabled(true);
         for (User user : users) {
             WeeklyMenuResponse weeklyMenu = weeklyMenuService.autoGenerateWeeklyMenuForUser(user.getId());
-            weeklyMenuService.sendWeeklyMenuByEmail(weeklyMenu.id(), user);
+            emailService.sendWeeklyMenuByEmail(weeklyMenu.id(), user);
         }
     }
 }

@@ -52,7 +52,7 @@ public class DishController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/me")
+    @PostMapping("/users/me")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a dish for current user", description = "Creates a new dish for the current user and returns it")
     public ResponseEntity<DishResponse> createDishForMe(
@@ -72,7 +72,7 @@ public class DishController {
         return ResponseEntity.ok(dishService.createDishForUser(request, userId));
     }
 
-    @GetMapping("/me")
+    @GetMapping("/users/me")
     @Operation(summary = "Get dishes for current user", description = "Returns all dishes for the current user")
     public ResponseEntity<List<DishResponse>> getDishesForMe() {
         return ResponseEntity.ok(dishService.getDishesForMe());

@@ -92,21 +92,13 @@ public class DailyMenuServiceImpl implements DailyMenuService {
     @Override
     public DailyMenuResponse createDailyMenuForMe(DailyMenuRequest request) {
         User user = userService.getCurrentUser();
-        List<Dish> dishes = dishRepository.findAllById(request.dishIds());
-        DailyMenu dailyMenu = new DailyMenu();
-        dailyMenu.setDayOfWeek(request.dayOfWeek());
-        dailyMenu.setDishes(dishes);
-        dailyMenu.setUser(user);
-        DailyMenu savedMenu = dailyMenuRepository.save(dailyMenu);
-        return mapToResponse(savedMenu);
+        return createDailyMenuForUser(request, user.getId());
     }
 
     @Override
     public List<DailyMenuResponse> getDailyMenusForMe() {
         User user = userService.getCurrentUser();
-        return dailyMenuRepository.findByUserId(user.getId()).stream()
-                .map(this::mapToResponse)
-                .toList();
+        return getDailyMenusForUser(user.getId());
     }
 
     private DailyMenuResponse mapToResponse(DailyMenu dailyMenu) {

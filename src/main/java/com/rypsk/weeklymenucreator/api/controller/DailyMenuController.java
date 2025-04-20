@@ -52,7 +52,7 @@ public class DailyMenuController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/me")
+    @PostMapping("/users/me")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a daily menu for current user", description = "Creates a new daily menu for the current user and returns it")
     public ResponseEntity<DailyMenuResponse> createDailyMenuForMe(
@@ -72,7 +72,7 @@ public class DailyMenuController {
         return ResponseEntity.ok(dailyMenuService.createDailyMenuForUser(request, userId));
     }
 
-    @GetMapping("/me")
+    @GetMapping("/users/me")
     @Operation(summary = "Get daily menus for current user", description = "Returns all daily menus for the current user")
     public ResponseEntity<List<DailyMenuResponse>> getDailyMenusForMe() {
         return ResponseEntity.ok(dailyMenuService.getDailyMenusForMe());

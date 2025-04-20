@@ -58,7 +58,7 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.getPublicRecipes());
     }
 
-    @PostMapping("/me")
+    @PostMapping("/users/me")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a recipe for current user", description = "Creates a new recipe for the current user and returns it")
     public ResponseEntity<RecipeResponse> createRecipeForMe(
@@ -78,7 +78,7 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.createRecipeForUser(request, userId));
     }
 
-    @GetMapping("/me")
+    @GetMapping("/users/me")
     @Operation(summary = "Get recipes for current user", description = "Returns all recipes for the current user")
     public ResponseEntity<List<RecipeResponse>> getRecipesForMe() {
         return ResponseEntity.ok(recipeService.getRecipesForMe());
@@ -92,7 +92,7 @@ public class RecipeController {
         return ResponseEntity.ok(recipeService.getRecipesForUser(userId));
     }
 
-    @GetMapping("/me/available")
+    @GetMapping("/users/me/available")
     @Operation(summary = "Get available recipes for current user", description = "Returns all available recipes for the current user based on their ingredients")
     public ResponseEntity<List<RecipeResponse>> getAvailableRecipesForMe() {
         return ResponseEntity.ok(recipeService.getAvailableRecipesForMe());
